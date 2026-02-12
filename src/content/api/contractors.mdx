@@ -1,0 +1,104 @@
+# Contractors API
+
+## Get Profile
+
+```
+GET /api/v1/contractor/profile
+```
+
+### Headers
+```
+Authorization: Bearer <contractor-token>
+```
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "full_name": "John Doe",
+    "email": "john.doe@contractor.com",
+    "company": "Acme Corp",
+    "trade": "Electrician",
+    "id_number": "ID-12345",
+    "phone": "+966501234567",
+    "photo_url": "https://...",
+    "is_active": true,
+    "sites": [
+      {
+        "id": "uuid",
+        "site_code": "NAMA-HQ-001",
+        "site_name": "NAMA Headquarters",
+        "latitude": 24.7136,
+        "longitude": 46.6753,
+        "geofence_radius": 200
+      }
+    ]
+  }
+}
+```
+
+## Get Access Schedules
+
+```
+GET /api/v1/access/schedule
+```
+
+### Headers
+```
+Authorization: Bearer <contractor-token>
+```
+
+### Query Parameters
+| Param | Type | Description |
+|-------|------|-------------|
+| `site_id` | string | Filter by site (optional) |
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": "uuid",
+      "site_code": "NAMA-HQ-001",
+      "site_name": "NAMA Headquarters",
+      "start_date": "2025-01-01",
+      "end_date": "2025-12-31",
+      "allowed_days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+      "start_time": "07:00",
+      "end_time": "17:00",
+      "is_active": true
+    }
+  ]
+}
+```
+
+## Upload Photo
+
+```
+POST /api/v1/contractor/photo
+```
+
+### Headers
+```
+Authorization: Bearer <contractor-token>
+Content-Type: multipart/form-data
+```
+
+### Request Body
+- `photo` — JPEG image file (max 5MB, compressed to 70% quality)
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "photo_url": "https://..."
+  }
+}
+```

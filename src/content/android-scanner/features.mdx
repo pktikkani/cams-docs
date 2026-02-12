@@ -1,0 +1,106 @@
+# Scanner App Features (Android)
+
+## QR Code Scanning
+
+Real-time QR code scanning with visual feedback:
+
+- **CameraX integration** — Modern camera API with lifecycle awareness
+- **ML Kit Barcode Scanning** — Google's on-device barcode detection
+- **Animated overlay** — Scan frame with moving scan line and corner brackets
+- **Debounce** — 2-second cooldown prevents duplicate rapid scans
+- **Auto-reset** — Result clears after 8 seconds, returns to scanning
+- **Haptic feedback** — Vibration on successful QR detection
+
+## Access Control Results
+
+### Access Granted
+- Green checkmark with "ACCESS GRANTED" text
+- Contractor **photo** displayed (100dp circular image)
+- Contractor name, company, and email shown
+- Scan logged to history
+
+### Access Denied
+- Red X with "ACCESS DENIED" text
+- Denial reason displayed prominently
+- Scan logged to history
+
+### Validating
+- Loading animation while backend processes
+- Network timeout handling
+
+## Entry/Exit Modes
+
+- Toggle button switches between Entry and Exit
+- **Entry mode** — Green accent, logs as entry scan
+- **Exit mode** — Red accent, logs as exit scan
+- Mode sent to backend with each validation request
+
+## Emergency Override
+
+For situations where QR scanning isn't possible:
+
+1. Tap emergency override button
+2. Select **Grant** or **Deny**
+3. Enter required **reason** for override
+4. Action logged with yellow warning badge
+5. Guard ID and timestamp recorded
+
+## Scan History
+
+Local audit log with full search and filter capabilities:
+
+- **Persistent storage** — Saved to SharedPreferences via Gson
+- **Search** — Filter by contractor name, company, or email
+- **Result filter** — Show All, Granted only, or Denied only
+- **Max entries** — 500 records with automatic trimming
+- **Auto-save** — Each scan immediately saved to history
+
+### History Entry Data
+| Field | Description |
+|-------|-------------|
+| Contractor name | From validation response |
+| Company | Contractor's company |
+| Result | Granted / Denied / Override |
+| Reason | Denial reason or override reason |
+| Timestamp | Date and time of scan |
+| Scan mode | Entry or Exit |
+
+## Offline Support
+
+When the device has no network connectivity:
+
+- **Offline cache** — Previously granted contractors cached locally
+- **48-hour validity** — Cached entries expire after 48 hours
+- **Max cache** — 200 entries stored
+- **Offline indicator** — Visual badge when operating offline
+- **Sync on reconnect** — Offline decisions logged and synced later
+
+## Guard Authentication
+
+- Email/password login
+- Device fingerprint sent with login request
+- Persistent session via SharedPreferences
+- Auto-assigned site from login response (if configured)
+- Manual site selection available
+
+## Site Management
+
+- View list of available sites
+- Select or change assigned site
+- Site name displayed in scanner header
+- Site code used for QR validation
+
+## Internationalization
+
+- English and Arabic language support
+- Language toggle via menu
+- RTL layout when Arabic is selected
+- String resources in `values/strings.xml` and `values-ar/strings.xml`
+
+## UI Design
+
+- **Dark theme** with cybersecurity aesthetic
+- **Cyan accent** (#00CDD9) for primary actions
+- **Animated scanner overlay** with scan line effect
+- **Material Design 3** components
+- **TalkBack** accessibility support

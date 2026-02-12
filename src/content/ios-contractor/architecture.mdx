@@ -1,0 +1,74 @@
+# App Architecture (iOS Contractor)
+
+## Project Structure
+
+```
+ContractorQRApp/
+├── ContractorQRApp.swift         # App entry point
+├── ContentView.swift             # Root view with tab navigation
+├── Core/
+│   ├── TOTPGenerator.swift       # HMAC-SHA256 TOTP (CryptoKit)
+│   ├── LocationManager.swift     # CLLocationManager wrapper
+│   ├── BiometricAuth.swift       # Face ID / Touch ID
+│   ├── KeychainManager.swift     # Secure storage
+│   ├── DeviceFingerprint.swift   # Unique device ID
+│   └── LocalizationManager.swift # EN/AR language switching
+├── Models/
+│   ├── Contractor.swift          # Domain models
+│   ├── Site.swift
+│   ├── Schedule.swift
+│   └── APIModels.swift           # Request/Response DTOs
+├── Network/
+│   ├── APIClient.swift           # URLSession-based HTTP client
+│   ├── APIEndpoints.swift        # Endpoint definitions
+│   └── AuthManager.swift         # Token management
+├── ViewModels/
+│   ├── AuthViewModel.swift       # Login + biometric logic
+│   ├── QRCodeViewModel.swift     # QR generation + timer
+│   ├── ScheduleViewModel.swift   # Schedule fetching
+│   └── ProfileViewModel.swift    # Profile + photo
+└── Views/
+    ├── Auth/
+    │   └── LoginView.swift
+    ├── QRCode/
+    │   ├── QRCodeView.swift      # Main QR display
+    │   └── CountdownRing.swift   # Animated timer ring
+    ├── Schedule/
+    │   └── ScheduleView.swift
+    ├── Profile/
+    │   └── ProfileView.swift
+    └── Components/               # Reusable SwiftUI views
+```
+
+## Architecture Pattern
+
+**MVVM** with SwiftUI:
+- ViewModels as `@Observable` / `ObservableObject`
+- `@Published` properties drive UI updates
+- `async/await` for network calls
+- `@AppStorage` for user preferences
+
+## Key Technical Details
+
+### TOTP Generation (CryptoKit)
+```swift
+// HMAC<SHA256> with Base32-decoded seed
+// 30-second time step
+// 6-digit output with dynamic truncation
+// RFC 6238 compliant
+```
+
+### QR Code Generation (CoreImage)
+```swift
+let filter = CIFilter.qrCodeGenerator()
+filter.setValue(data, forKey: "inputMessage")
+filter.setValue("M", forKey: "inputCorrectionLevel")
+// Renders to UIImage via CIContext
+```
+
+### Keychain Storage
+```swift
+// kSecClassGenericPassword
+// kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+// Service: "com.pragmatic.contractorqrapp"
+```

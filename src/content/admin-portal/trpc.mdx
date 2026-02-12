@@ -1,0 +1,110 @@
+# tRPC API Layer
+
+The admin portal uses tRPC v11 for type-safe API communication between the Next.js frontend and the PostgreSQL backend.
+
+## Router Structure
+
+```
+src/server/routers/
+├── _app.ts          # Main router composition
+├── auth.ts          # Authentication + admin management
+├── contractors.ts   # Contractor CRUD + devices + photos + import
+├── sites.ts         # Site CRUD
+├── schedules.ts     # Schedule CRUD + export
+├── scanners.ts      # Scanner device management
+├── logs.ts          # Scan log queries + export + reporting
+└── dashboard.ts     # Dashboard statistics + site map data
+```
+
+## Middleware Chain
+
+```
+publicProcedure          → No auth required (login only)
+    ↓
+protectedProcedure       → Requires valid JWT session
+    ↓
+adminProcedure           → Requires super_admin or site_admin role
+    ↓
+superAdminProcedure      → Requires super_admin role only
+```
+
+The `auditorProcedure` is equivalent to `protectedProcedure` — auditors can read data but all mutation endpoints use `adminProcedure`.
+
+## Auth Router
+
+| Procedure | Type | Access | Description |
+|-----------|------|--------|-------------|
+| `login` | mutation | public | Email/password login, returns JWT cookie |
+| `logout` | mutation | public | Clears JWT cookie |
+| `me` | query | protected | Returns current user info |
+| `listAdmins` | query | superAdmin | Lists all admin users |
+| `createAdmin` | mutation | superAdmin | Creates a new admin user |
+
+## Contractors Router
+
+| Procedure | Type | Access | Description |
+|-----------|------|--------|-------------|
+| `list` | query | protected | Paginated list with search |
+| `getById` | query | protected | Full contractor detail |
+| `create` | mutation | admin | Create contractor with TOTP seed |
+| `update` | mutation | admin | Update contractor info |
+| `toggleStatus` | mutation | admin | Activate/deactivate |
+| `uploadPhoto` | mutation | admin | Store Base64 photo |
+| `deletePhoto` | mutation | admin | Remove photo |
+| `resetDevice` | mutation | admin | Deactivate single device |
+| `resetAllDevices` | mutation | admin | Deactivate all devices |
+| `bulkImport` | mutation | admin | Import contractors from array |
+| `exportAll` | query | protected | Export all contractors |
+
+## Sites Router
+
+| Procedure | Type | Access | Description |
+|-----------|------|--------|-------------|
+| `list` | query | protected | Paginated list with search |
+| `getById` | query | protected | Full site detail |
+| `create` | mutation | admin | Create site |
+| `update` | mutation | admin | Update site info |
+| `toggleStatus` | mutation | admin | Activate/deactivate |
+
+## Schedules Router
+
+| Procedure | Type | Access | Description |
+|-----------|------|--------|-------------|
+| `list` | query | protected | Paginated list with search |
+| `create` | mutation | admin | Create access schedule |
+| `toggleStatus` | mutation | admin | Activate/deactivate |
+| `delete` | mutation | admin | Delete schedule |
+| `exportAll` | query | protected | Export all schedules |
+
+## Logs Router
+
+| Procedure | Type | Access | Description |
+|-----------|------|--------|-------------|
+| `list` | query | protected | Paginated list with filters |
+| `export` | query | protected | Export filtered logs |
+| `reportSummary` | query | protected | Aggregate stats for date range |
+
+## Dashboard Router
+
+| Procedure | Type | Access | Description |
+|-----------|------|--------|-------------|
+| `stats` | query | protected | Summary stat counts |
+| `recentScans` | query | protected | Latest 10 scans |
+| `scanChart` | query | protected | 7-day scan chart data |
+| `expiringSchedules` | query | protected | Schedules expiring within 7 days |
+| `siteMapData` | query | protected | All sites with coordinates and scan counts |
+
+## Database Access
+
+The portal connects directly to PostgreSQL using the `pg` driver with raw SQL queries (no ORM):
+
+```typescript
+import { pool } from "@/server/db";
+
+const result = await pool.query(
+  "SELECT * FROM contractors WHERE id = $1",
+  [id]
+);
+```
+
+This approach provides full control over query optimization and avoids ORM overhead.

@@ -1,0 +1,63 @@
+# Sites & Schedules API
+
+Sites and schedules are primarily managed through the Admin Portal (tRPC), but are accessible via REST for mobile apps.
+
+## Site Data Model
+
+```json
+{
+  "id": "uuid",
+  "site_name": "NAMA Headquarters",
+  "site_code": "NAMA-HQ-001",
+  "address": "King Fahd Road, Riyadh",
+  "latitude": 24.7136,
+  "longitude": 46.6753,
+  "geofence_radius": 200,
+  "is_active": true,
+  "created_at": "2025-01-01T00:00:00Z"
+}
+```
+
+### Key Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `site_code` | string | Unique identifier used in QR codes |
+| `latitude` / `longitude` | number | GPS coordinates for geofencing |
+| `geofence_radius` | number | Radius in meters for location verification |
+| `is_active` | boolean | Whether site accepts scans |
+
+## Schedule Data Model
+
+```json
+{
+  "id": "uuid",
+  "contractor_id": "uuid",
+  "site_id": "uuid",
+  "start_date": "2025-01-01",
+  "end_date": "2025-12-31",
+  "allowed_days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+  "start_time": "07:00",
+  "end_time": "17:00",
+  "is_active": true
+}
+```
+
+### Validation Rules
+
+- `start_date` must be before `end_date`
+- `start_time` must be before `end_time`
+- `allowed_days` must contain at least one day
+- A contractor can have multiple schedules for different sites
+- Overlapping schedules for the same contractor + site are allowed (union of access windows)
+
+## How Schedules Affect Access
+
+During QR validation, the backend checks:
+
+1. An **active** schedule exists for the contractor + site combination
+2. The current **date** is between `start_date` and `end_date`
+3. The current **day of week** is in `allowed_days`
+4. The current **time** is between `start_time` and `end_time`
+
+All four conditions must be true for access to be granted.

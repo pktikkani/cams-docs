@@ -1,0 +1,138 @@
+# Scanning & Validation API
+
+## Validate QR Code
+
+This is the core endpoint used by scanner apps to validate contractor QR codes.
+
+```
+POST /api/v1/scanner/validate
+```
+
+### Headers
+```
+Authorization: Bearer <guard-token>
+```
+
+### Request Body
+
+```json
+{
+  "qr_data": "eyJjb250cmFjdG9yX2lkIjoi...",
+  "scanner_site_code": "NAMA-HQ-001",
+  "scan_mode": "entry"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `qr_data` | string | Base64-encoded QR payload |
+| `scanner_site_code` | string | Site code of the scanning device |
+| `scan_mode` | string | `"entry"` or `"exit"` |
+
+### Access Granted Response (200)
+
+```json
+{
+  "status": "granted",
+  "contractor": {
+    "name": "John Doe",
+    "company": "Acme Corp",
+    "email": "john.doe@contractor.com",
+    "photo_url": "https://..."
+  }
+}
+```
+
+### Access Denied Response (200)
+
+```json
+{
+  "status": "denied",
+  "reason": "No active schedule found for this site"
+}
+```
+
+## Get Available Sites
+
+```
+GET /api/v1/scanner/sites
+```
+
+### Headers
+```
+Authorization: Bearer <guard-token>
+```
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": "uuid",
+      "site_code": "NAMA-HQ-001",
+      "site_name": "NAMA Headquarters",
+      "is_active": true
+    }
+  ]
+}
+```
+
+## Assign Site
+
+```
+POST /api/v1/scanner/assign-site
+```
+
+### Headers
+```
+Authorization: Bearer <guard-token>
+```
+
+### Request Body
+
+```json
+{
+  "site_id": "uuid"
+}
+```
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "assigned_site": {
+      "id": "uuid",
+      "site_code": "NAMA-HQ-001",
+      "site_name": "NAMA Headquarters"
+    }
+  }
+}
+```
+
+## Get Assigned Site
+
+```
+GET /api/v1/scanner/assigned-site
+```
+
+### Headers
+```
+Authorization: Bearer <guard-token>
+```
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "site_code": "NAMA-HQ-001",
+    "site_name": "NAMA Headquarters"
+  }
+}
+```

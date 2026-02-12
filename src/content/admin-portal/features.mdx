@@ -1,0 +1,102 @@
+# Admin Portal Features
+
+## Dashboard
+
+The dashboard provides a real-time overview of the entire CAMS system:
+
+- **Summary stat cards** — Total contractors, active sites, scans today, active schedules
+- **Activity charts** — Bar charts showing scan activity over the past 7 days (granted vs denied)
+- **Recent scan logs** — Latest scan entries with contractor, site, result, and timestamp
+- **Expiring schedules** — Upcoming schedule expirations for proactive management
+- **Live site map** — Interactive Leaflet map showing all sites with geofence circles and activity indicators
+- **Report generation** — Download PDF/Excel reports for a custom date range
+
+## Contractor Management
+
+Full CRUD operations for contractor records:
+
+- **List view** — Paginated table with search, status badges, and quick actions
+- **Detail view** — Tabbed interface with:
+  - **Overview** — Personal info, company, trade, ID number, photo
+  - **Devices** — Registered devices with reset/deactivate controls
+  - **Schedules** — Active access schedules for this contractor
+  - **Activity** — Recent scan log entries
+- **Photo management** — View, upload, and remove contractor photos
+- **Bulk import** — Upload CSV/Excel files to create multiple contractors at once
+- **Export** — Download all contractors as Excel file
+- **Activation toggle** — Enable/disable contractor access
+
+## Site Management
+
+- **List view** — All sites with status, contractor count, and location
+- **Detail view** — Site info, assigned contractors, scanner devices, geofence config
+- **Create/Edit** — Name, code, address, GPS coordinates, geofence radius
+- **Activation toggle** — Enable/disable site
+
+## Schedule Management
+
+- **List view** — All schedules with contractor, site, period, days, hours
+- **Create** — Select contractor + site, set date range, allowed days, time window
+- **Status toggle** — Activate/deactivate schedules
+- **Expired badge** — Visual indicator for past-due schedules
+- **Export** — Download all schedules as Excel
+
+## Scanner/Tablet Management
+
+- **List view** — All registered scanner devices with assignment and status
+- **Assignment** — Assign/reassign scanner to a site
+- **Status** — Active/inactive with last seen timestamp
+- **Guard info** — Guard name associated with each device
+
+## Scan Logs / Audit Trail
+
+- **Full log viewer** — Every scan with timestamp, contractor, site, result, and scanner device
+- **Filters** — Search by contractor/site, filter by result (granted/denied/all), date range
+- **Pagination** — Server-side pagination for large datasets
+- **CSV export** — Download filtered logs as CSV
+- **Excel export** — Download filtered logs as Excel file
+
+## Admin User Management
+
+- **User list** — All admin accounts with role, status, and creation date
+- **Create admin** — Add new admin with email, password, name, and role selection
+- **Role assignment** — Super Admin, Site Admin, Viewer, or Auditor
+- **System info** — Backend API URL and current user role display
+
+## Real-time Dashboard Map
+
+The live site map uses Leaflet with OpenStreetMap tiles:
+
+- **Auto-fit bounds** — Map automatically zooms to show all site markers
+- **Activity indicators** — Green markers for sites with recent scans, gray for inactive
+- **Geofence circles** — Visual representation of each site's geofence radius
+- **Popup details** — Click a marker to see site name, code, scan count (1h), and geofence radius
+- **Dynamic import** — Map component loaded client-side only (`ssr: false`)
+
+## Reporting Engine
+
+- **Generate Report** dialog on dashboard with date range picker
+- **Excel format** — Full data export via SheetJS
+- **PDF format** — Browser print with styled HTML layout
+- **Report data** — Overview stats, scan totals, granted/denied ratio, top contractors, top sites
+
+## Bulk Import/Export
+
+### Import
+- Upload CSV or Excel files
+- Flexible column name matching (name, full_name, contractor_name, etc.)
+- Preview table before confirming import
+- Auto-generation of TOTP seeds for new contractors
+- Success/error count reporting
+
+### Export
+- Download contractors as Excel
+- Download schedules as Excel
+- Download scan logs as CSV or Excel
+
+## Bilingual Support
+
+- **Language toggle** — EN/AR switch in header
+- **140+ translation keys** — Complete coverage of all UI text
+- **RTL layout** — Automatic right-to-left when Arabic is selected
+- **Persistent** — Language preference saved to localStorage

@@ -1,0 +1,62 @@
+# Admin Portal
+
+The CAMS Admin Portal is a full-featured web dashboard for managing the entire contractor access system. Built with modern web technologies, it provides real-time visibility into contractor activity, site management, and comprehensive audit trails.
+
+## Technology Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| API Layer | tRPC v11 + SuperJSON |
+| Database | PostgreSQL via `pg` (raw SQL) |
+| UI Components | shadcn/ui + Radix UI |
+| Styling | Tailwind CSS v4 |
+| Charts | Recharts |
+| Maps | Leaflet + react-leaflet |
+| Auth | JWT via `jose` + httpOnly cookies |
+| Validation | Zod v4 |
+| Excel | SheetJS (xlsx) |
+| Toasts | Sonner |
+| i18n | Custom React Context |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── layout.tsx              # Root layout with providers
+│   ├── globals.css             # Global styles + Leaflet overrides
+│   ├── login/page.tsx          # Login page
+│   ├── api/trpc/[trpc]/        # tRPC API route handler
+│   └── (dashboard)/            # Authenticated dashboard routes
+│       ├── layout.tsx           # Dashboard layout (sidebar + header)
+│       ├── page.tsx             # Dashboard home (stats, charts, map)
+│       ├── contractors/         # Contractor CRUD + detail pages
+│       ├── sites/               # Site CRUD + detail pages
+│       ├── schedules/           # Schedule management
+│       ├── scanners/            # Scanner device management
+│       ├── logs/                # Scan log viewer with export
+│       └── settings/            # Admin user management
+├── server/
+│   ├── trpc/                    # tRPC initialization + context
+│   ├── routers/                 # API route handlers (8 routers)
+│   └── db/                      # Database connection + migrations
+├── components/
+│   ├── layout/                  # Header + Sidebar
+│   └── ui/                      # shadcn/ui components + SiteMap
+└── lib/
+    ├── trpc.ts                  # Client-side tRPC setup
+    ├── i18n.tsx                 # Internationalization provider
+    └── translations/            # EN + AR translation files
+```
+
+## Default Credentials
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@cams.com` |
+| Password | `admin123` |
+| Role | Super Admin |
+
+> Change the default password immediately in production.

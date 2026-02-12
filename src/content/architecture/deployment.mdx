@@ -1,0 +1,89 @@
+# Deployment
+
+## Backend API
+
+The Go backend is deployed as a containerized service:
+
+- **Hosting**: Railway (PaaS)
+- **URL**: `https://contractor-api.nubewired.com`
+- **Database**: PostgreSQL 15 on Railway
+- **SSL**: Automatic TLS via Railway
+
+## Admin Portal
+
+The Next.js admin portal can be deployed to:
+
+- **Vercel** (recommended for Next.js)
+- **Railway** (same platform as backend)
+- **Any Node.js hosting** supporting Next.js
+
+### Environment Variables
+
+```bash
+# Required
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+JWT_SECRET=your-secret-key
+
+# Optional
+DB_SSL=true
+```
+
+### Build & Deploy
+
+```bash
+npm install
+npm run build
+npm start
+```
+
+## Mobile Apps
+
+### Android
+- **Distribution**: Google Play Store or direct APK
+- **Min SDK**: API 26 (Android 8.0)
+- **Build**: Android Studio + Gradle (Kotlin DSL)
+
+### iOS
+- **Distribution**: App Store or TestFlight
+- **Min iOS**: 16.0
+- **Build**: Xcode 15+
+
+## Database Migrations
+
+Run migrations to set up the database schema:
+
+```bash
+npx tsx src/server/db/migrate.ts
+```
+
+This creates all required tables:
+- `admin_users` with role-based access
+- `scanner_devices` with site assignments
+- Default super admin user: `admin@cams.com` / `admin123`
+
+## Infrastructure Diagram
+
+```
+┌──────────────┐
+│   Vercel /   │
+│  Railway     │◄── Admin Portal (Next.js)
+└──────┬───────┘
+       │
+       ▼ DATABASE_URL
+┌──────────────┐
+│  PostgreSQL  │◄── Shared Database
+│  (Railway)   │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│  Go Backend  │◄── REST API
+│  (Railway)   │
+└──────────────┘
+       ▲
+       │ HTTPS
+┌──────┴───────┐
+│ Mobile Apps  │
+│ (iOS/Android)│
+└──────────────┘
+```

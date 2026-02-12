@@ -1,0 +1,69 @@
+# Security Features (Android Contractor)
+
+## Root Detection
+
+The app detects rooted devices and **terminates immediately**:
+
+### Checks Performed
+1. **Binary paths** — Scans 13+ common locations for `su` binary:
+   - `/system/bin/su`, `/system/xbin/su`, `/sbin/su`, etc.
+2. **Build tags** — Detects `test-keys` in `Build.TAGS`
+3. **Root apps** — Scans for 15+ known root management apps:
+   - Magisk Manager, SuperSU, Xposed Installer, etc.
+
+If any check fails, `Process.killProcess(Process.myPid())` is called.
+
+## Screenshot Prevention
+
+- `FLAG_SECURE` applied to all windows
+- Prevents screenshots and screen recording
+- Blocks Recent Apps preview from showing QR content
+
+## Biometric Authentication
+
+- Uses AndroidX Biometric library
+- Supports fingerprint and face recognition
+- `BiometricPrompt` with `BIOMETRIC_STRONG` authenticator
+- Fallback to email/password if biometrics unavailable
+
+## Encrypted Storage
+
+All sensitive data stored using `EncryptedSharedPreferences`:
+
+| Data | Encryption |
+|------|-----------|
+| JWT tokens | AES-256-GCM |
+| TOTP seed | AES-256-GCM |
+| Contractor profile | AES-256-GCM |
+| Device fingerprint | AES-256-GCM |
+
+### Key Management
+- MasterKey created with `MasterKey.Builder`
+- Key stored in Android Keystore (hardware-backed when available)
+- `AES256_GCM` encryption scheme for both keys and values
+
+## Device Fingerprinting
+
+Unique device identifier generated from:
+- `Settings.Secure.ANDROID_ID`
+- Hardware serial (where available)
+- Build fingerprint
+
+The fingerprint is:
+- Sent during login and device registration
+- Included in every QR code payload
+- Verified by the backend during QR validation
+
+## Network Security
+
+- All API calls over HTTPS/TLS
+- JWT token injected via OkHttp `AuthInterceptor`
+- Token refresh on 401 responses
+- Certificate pinning (configurable)
+
+## TOTP Security
+
+- Seed stored encrypted, never transmitted in plain text after initial login
+- Token valid for exactly 30 seconds
+- Nonce ensures single-use (prevents replay attacks)
+- Device fingerprint binds QR to the generating device

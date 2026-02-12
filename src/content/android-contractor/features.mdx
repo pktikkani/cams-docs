@@ -1,0 +1,71 @@
+# Contractor App Features (Android)
+
+## QR Code Generation
+
+The core feature — generating time-rotating QR codes for site access:
+
+- **TOTP-based** — HMAC-SHA256, 30-second rotation, RFC 6238 compliant
+- **Real-time countdown** — Visual progress ring with color coding (green > 5s, red ≤ 5s)
+- **Auto-regeneration** — New QR code generated automatically when timer expires
+- **Site-specific** — QR payload includes the selected site code
+- **Entry/Exit modes** — Toggle between entry and exit scan modes
+- **Geofence enforcement** — QR blocked when outside site geofence radius
+
+### QR Payload Contents
+- Contractor ID (UUID)
+- Unix timestamp
+- 6-digit TOTP token
+- Site code
+- Nonce (single-use UUID)
+- Device fingerprint
+- Access mode (entry/exit)
+
+## Authentication
+
+- **Email/password login** — Standard credential authentication
+- **Biometric unlock** — Fingerprint and Face ID for subsequent logins
+- **JWT session** — Token-based session management
+- **Auto-logout** — Session expiration handling
+
+## Site Management
+
+- **Multi-site support** — Select from assigned sites via chip selector
+- **Site details** — View name, code, coordinates, geofence radius
+- **Access schedules** — View allowed days, hours, and date ranges per site
+- **Distance display** — Real-time distance to site when outside geofence
+
+## Geofencing
+
+- **GPS verification** — FusedLocationProviderClient with HIGH_ACCURACY
+- **Update interval** — Location updates every 5 seconds (min 3s)
+- **Min distance** — 10 meters between updates
+- **Visual status** — Color-coded geofence status banner
+- **Configurable radius** — Per-site geofence radius from backend
+
+## Photo Management
+
+- **Camera capture** — Take photo via device camera
+- **Gallery picker** — Select from existing photos
+- **JPEG compression** — 70% quality to reduce upload size
+- **Multipart upload** — HTTP multipart form data to backend
+- **Max size** — 5MB limit
+
+## Offline Mode
+
+- **Cached schedules** — Access schedule data available without network
+- **Cache validity** — Tracked with timestamps
+- **Offline banner** — Visual indicator when offline
+- **Last sync display** — Shows when data was last refreshed
+
+## Profile
+
+- **Contractor info** — Name, email, company, trade, ID number
+- **Photo display** — Circular avatar with Base64 decoded image
+- **Security status** — Show enabled security features
+- **Logout** — Clear session and return to login
+
+## Accessibility
+
+- **TalkBack support** — Semantic descriptions for screen readers
+- **Content descriptions** — All interactive elements labeled
+- **Keyboard navigation** — Full keyboard support

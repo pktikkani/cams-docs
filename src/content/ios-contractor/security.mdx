@@ -1,0 +1,51 @@
+# Security Features (iOS Contractor)
+
+## Biometric Authentication
+
+- **Face ID** on iPhone X and later
+- **Touch ID** on earlier models
+- Uses `LAContext` from LocalAuthentication framework
+- `LAPolicy.deviceOwnerAuthenticationWithBiometrics`
+- Graceful fallback to email/password
+
+## Keychain Storage
+
+All sensitive data stored in iOS Keychain:
+
+| Data | Access Level |
+|------|-------------|
+| JWT token | `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` |
+| TOTP seed | `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` |
+| Credentials | `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` |
+
+- Data encrypted at rest by iOS Secure Enclave
+- Not included in iCloud Keychain sync
+- Not included in device backups
+
+## Screenshot Detection
+
+- Observes `UIApplication.userDidTakeScreenshotNotification`
+- Logs screenshot attempts
+- Optional QR code hiding on screenshot
+
+## Device Fingerprinting
+
+- Uses `UIDevice.current.identifierForVendor`
+- Combined with device model and system version
+- Hashed to create unique fingerprint
+- Verified by backend during QR validation
+
+## Network Security
+
+- All communication via HTTPS/TLS
+- App Transport Security (ATS) enforced
+- JWT Bearer token authentication
+- URLSession with ephemeral configuration (no caching of sensitive data)
+
+## Jailbreak Detection
+
+Checks performed on app launch:
+1. File existence checks (`/Applications/Cydia.app`, `/private/var/lib/apt/`)
+2. URL scheme checks (`cydia://`)
+3. Sandbox integrity verification
+4. Write permission checks outside sandbox

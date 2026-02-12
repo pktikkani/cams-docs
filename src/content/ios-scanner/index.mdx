@@ -1,0 +1,55 @@
+# iOS — Scanner App
+
+The iOS Scanner App is used by security guards to scan and validate contractor QR codes. Built natively with Swift and SwiftUI.
+
+## Quick Facts
+
+| Property | Value |
+|----------|-------|
+| Bundle ID | `com.pragmatic.contractorqrscanner` |
+| Language | Swift |
+| UI | SwiftUI |
+| Min iOS | 16.0 |
+| Camera | AVFoundation (AVCaptureSession) |
+| Theme | Dark with Cyan accent |
+
+## Key Frameworks
+
+| Framework | Purpose |
+|-----------|---------|
+| SwiftUI | Declarative UI |
+| AVFoundation | Camera + QR code detection |
+| CoreLocation | Site proximity (optional) |
+| Security (Keychain) | Credential storage |
+| Combine | Reactive data flow |
+
+## Navigation
+
+```
+Login Screen
+    ↓ (guard email + password)
+Site Selection
+    ↓ (choose assigned site)
+Main TabView
+    ├── Scanner Tab
+    │   ├── Header (guard name, site, status)
+    │   ├── Entry/Exit toggle
+    │   ├── Camera viewfinder with overlay
+    │   ├── Result overlay (Granted/Denied)
+    │   └── Emergency override sheet
+    └── History Tab
+        ├── Search
+        ├── Filter (All / Granted / Denied)
+        └── Scan log list
+```
+
+## Scan Flow
+
+1. Guard logs in with email/password
+2. Selects assigned site
+3. Chooses Entry or Exit mode
+4. Camera activates via AVCaptureSession
+5. AVMetadataMachineReadableCodeObject detects QR
+6. Base64 data extracted and sent to backend
+7. Result displayed with contractor photo
+8. Auto-reset after 8 seconds

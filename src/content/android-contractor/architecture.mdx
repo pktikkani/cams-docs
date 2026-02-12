@@ -1,0 +1,99 @@
+# App Architecture (Android Contractor)
+
+## Project Structure
+
+```
+com.pragmatic.contractorqrapp/
+├── ContractorQRApp.kt          # Application class (root detection)
+├── MainActivity.kt             # Single activity (screenshot prevention)
+├── core/
+│   ├── crypto/
+│   │   └── TOTPGenerator.kt    # HMAC-SHA256 TOTP (RFC 6238)
+│   ├── location/
+│   │   └── LocationManager.kt  # GPS + geofence verification
+│   ├── network/
+│   │   ├── AppUpdateChecker.kt # Version checks
+│   │   └── NetworkMonitor.kt   # Connectivity tracking
+│   ├── notifications/
+│   │   └── PushNotificationManager.kt
+│   ├── security/
+│   │   ├── BiometricAuthManager.kt
+│   │   ├── DeviceFingerprint.kt
+│   │   ├── RootDetector.kt
+│   │   └── ScreenshotPrevention.kt
+│   └── LanguageManager.kt      # EN/AR runtime switching
+├── data/
+│   ├── local/
+│   │   ├── SecurePreferences.kt # AES-256-GCM encrypted storage
+│   │   └── OfflineCache.kt     # Cached schedules
+│   ├── model/
+│   │   ├── Models.kt           # Domain models
+│   │   └── ApiModels.kt        # API DTOs
+│   └── network/
+│       ├── ApiClient.kt        # Retrofit configuration
+│       ├── ApiService.kt       # API endpoints interface
+│       └── AuthInterceptor.kt  # JWT token injection
+└── ui/
+    ├── auth/
+    │   ├── LoginScreen.kt
+    │   └── AuthViewModel.kt
+    ├── qrcode/
+    │   ├── QRCodeScreen.kt     # Main QR display
+    │   ├── QRCodeViewModel.kt  # QR logic + timer + location
+    │   └── QRCodeGenerator.kt  # ZXing wrapper
+    ├── schedule/
+    │   ├── ScheduleScreen.kt
+    │   └── ScheduleViewModel.kt
+    ├── profile/
+    │   └── ProfileScreen.kt
+    ├── navigation/
+    │   ├── AppNavigation.kt    # NavHost setup
+    │   ├── BottomNavBar.kt     # Bottom tabs
+    │   └── Screen.kt           # Destinations
+    ├── components/             # Reusable UI components
+    └── theme/                  # Colors, typography, Material theme
+```
+
+## Architecture Pattern
+
+**MVVM** (Model-View-ViewModel) with:
+- **ViewModels** managing UI state via `StateFlow`
+- **Retrofit** for API calls with coroutines
+- **Encrypted SharedPreferences** for local storage
+- **Single Activity** with Compose Navigation
+
+## Key Technical Details
+
+### TOTP Generation
+```kotlin
+// HMAC-SHA256 with Base32-decoded seed
+// 30-second time step per RFC 6238
+// Dynamic truncation per RFC 4226
+// Compatible with Go backend (pquerna/otp)
+```
+
+### Location Tracking
+```kotlin
+// FusedLocationProviderClient
+// Priority: HIGH_ACCURACY
+// Interval: 5 seconds (min 3s)
+// Min distance: 10 meters
+```
+
+### Encrypted Storage
+```kotlin
+// MasterKey: AES-256-GCM
+// Keys encryption: AES-256-SIV
+// Values encryption: AES-256-GCM
+```
+
+## Permissions
+
+| Permission | Purpose |
+|------------|---------|
+| `INTERNET` | API communication |
+| `USE_BIOMETRIC` | Biometric authentication |
+| `ACCESS_FINE_LOCATION` | GPS for geofencing |
+| `ACCESS_COARSE_LOCATION` | Location fallback |
+| `CAMERA` | Photo capture |
+| `POST_NOTIFICATIONS` | Push notifications |

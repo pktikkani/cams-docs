@@ -1,0 +1,69 @@
+# Bilingual Support (EN/AR)
+
+CAMS provides full bilingual support for English and Arabic across all platforms, including RTL (right-to-left) layout for Arabic.
+
+## Implementation by Platform
+
+### Admin Portal (Next.js)
+
+The admin portal uses a lightweight, custom i18n system:
+
+- **`lib/i18n.tsx`** — React Context provider with `useTranslation()` hook
+- **`lib/translations/en.ts`** — 140+ English translation keys
+- **`lib/translations/ar.ts`** — Full Arabic translations
+- **Language toggle** in the header (EN/AR button)
+- **RTL support** via `document.documentElement.dir = "rtl"` when Arabic is selected
+- **Persistence** via `localStorage`
+
+```tsx
+// Usage in any component
+const { t, language, setLanguage } = useTranslation();
+
+return <h1>{t("dashboard.title")}</h1>;
+```
+
+### Android Apps (Kotlin)
+
+Both Android apps use Android's built-in resource system:
+
+- **`res/values/strings.xml`** — English strings
+- **`res/values-ar/strings.xml`** — Arabic strings
+- **`LanguageManager.kt`** — Custom class for runtime language switching
+- Language selection persisted in SharedPreferences
+- Supports runtime language change without app restart
+
+### iOS Apps (Swift)
+
+Both iOS apps use a custom `LocalizationManager`:
+
+- **`Localizable.strings`** (en) — English strings
+- **`Localizable.strings`** (ar) — Arabic strings
+- **`LocalizationManager.swift`** — ObservableObject for SwiftUI integration
+- Language toggle via `.environment(\.locale)` modifier
+- RTL layout handled automatically by SwiftUI
+
+## Translation Coverage
+
+| Category | Key Count | Example Keys |
+|----------|-----------|-------------|
+| Navigation | 8 | `nav.dashboard`, `nav.contractors` |
+| Dashboard | 12 | `dashboard.title`, `dashboard.totalContractors` |
+| Contractors | 15 | `contractors.title`, `contractors.addContractor` |
+| Sites | 10 | `sites.title`, `sites.createSite` |
+| Schedules | 10 | `schedules.title`, `schedules.createSchedule` |
+| Logs | 8 | `logs.title`, `logs.searchPlaceholder` |
+| Settings | 10 | `settings.title`, `settings.adminUsers` |
+| Common | 25 | `common.save`, `common.delete`, `common.active` |
+| Tables | 15 | `table.contractor`, `table.site`, `table.status` |
+| Roles | 4 | `role.super_admin`, `role.auditor` |
+
+## RTL Layout Handling
+
+When Arabic is selected:
+
+- **Text direction** flips to right-to-left
+- **Sidebar** moves to the right side
+- **Navigation arrows** reverse direction
+- **Form layouts** mirror horizontally
+- **Tables** align text from right
+- **Icons** maintain their orientation (non-directional icons like search, settings)

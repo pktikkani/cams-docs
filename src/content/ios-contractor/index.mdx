@@ -1,0 +1,52 @@
+# iOS — Contractor App
+
+The iOS Contractor App enables contractors to generate TOTP-based QR codes for site access. Built natively with Swift and SwiftUI.
+
+## Quick Facts
+
+| Property | Value |
+|----------|-------|
+| Bundle ID | `com.pragmatic.contractorqrapp` |
+| Language | Swift |
+| UI | SwiftUI |
+| Min iOS | 16.0 |
+| Theme | Dark with Cyan accent |
+
+## Key Frameworks
+
+| Framework | Purpose |
+|-----------|---------|
+| SwiftUI | Declarative UI |
+| CoreImage | QR code generation (CIFilter) |
+| CoreLocation | GPS and geofencing |
+| LocalAuthentication | Face ID / Touch ID |
+| Security (Keychain) | Encrypted credential storage |
+| AVFoundation | Camera (photo capture) |
+| CryptoKit | HMAC-SHA256 for TOTP |
+
+## Navigation
+
+```
+Login Screen
+    ↓ (email + password + biometric)
+Main TabView
+    ├── QR Code Tab
+    │   ├── Site picker
+    │   ├── Entry/Exit toggle
+    │   ├── QR code with countdown ring
+    │   └── Geofence status
+    ├── Schedule Tab
+    │   └── Access schedules list
+    └── Profile Tab
+        ├── Contractor info + photo
+        ├── Security features
+        └── Logout
+```
+
+## API Connection
+
+```
+Base URL: https://contractor-api.nubewired.com
+Auth: JWT Bearer token
+Networking: URLSession with async/await
+```

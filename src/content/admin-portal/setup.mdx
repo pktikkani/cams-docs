@@ -1,0 +1,100 @@
+# Setup & Configuration
+
+## Prerequisites
+
+- Node.js 18.17+
+- PostgreSQL 15+ database
+- npm or yarn
+
+## Installation
+
+```bash
+git clone <repository-url> contractor-admin-portal
+cd contractor-admin-portal
+npm install
+```
+
+## Environment Variables
+
+Create a `.env.local` file:
+
+```bash
+# Database connection (required)
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+
+# JWT secret for admin auth (required)
+JWT_SECRET=your-secure-random-string
+
+# Enable SSL for database connection
+DB_SSL=true
+```
+
+## Database Setup
+
+Run the migration script to create all required tables:
+
+```bash
+npx tsx src/server/db/migrate.ts
+```
+
+This creates:
+- `admin_users` table with role-based access
+- `scanner_devices` table with site assignments
+- Required indexes
+- Default super admin user (`admin@cams.com` / `admin123`)
+- Auditor role constraint
+- Photo URL column on contractors
+
+## Development
+
+```bash
+npm run dev
+```
+
+The portal runs on `http://localhost:3000`.
+
+## Build & Production
+
+```bash
+npm run build
+npm start
+```
+
+## Key Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| next | ^16.1.6 | React framework |
+| react | ^19.2.3 | UI library |
+| @trpc/server | ^11.10.0 | Type-safe API |
+| pg | ^8.18.0 | PostgreSQL driver |
+| jose | ^6.1.3 | JWT handling |
+| bcryptjs | ^3.0.3 | Password hashing |
+| zod | ^4.3.6 | Schema validation |
+| recharts | ^3.7.0 | Charts |
+| leaflet | ^1.9.4 | Maps |
+| xlsx | ^0.18.5 | Excel import/export |
+| date-fns | ^4.1.0 | Date formatting |
+| sonner | ^2.0.7 | Toast notifications |
+
+## Troubleshooting
+
+### Map not showing tiles
+If the Leaflet map shows a colored background but no tiles:
+- Ensure `leaflet/dist/leaflet.css` is imported in `globals.css`
+- Add CSS overrides to prevent Tailwind from breaking tile images:
+  ```css
+  .leaflet-tile-pane img {
+    max-width: none !important;
+    max-height: none !important;
+  }
+  ```
+
+### Database connection errors
+- Verify `DATABASE_URL` is correct
+- If using Railway, ensure `DB_SSL=true` is set
+- Check that the database has the required tables (run migrations)
+
+### Login issues
+- Default credentials: `admin@cams.com` / `admin123`
+- If password doesn't work, the bcrypt hash may need regenerating via the migration script

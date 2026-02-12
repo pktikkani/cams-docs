@@ -1,0 +1,59 @@
+# Contractor App Features (iOS)
+
+## QR Code Generation
+
+- **TOTP-based** — HMAC-SHA256 via CryptoKit, 30-second rotation
+- **CoreImage rendering** — `CIQRCodeGenerator` CIFilter for QR generation
+- **Animated countdown** — Circular progress ring with color transition
+- **Auto-regeneration** — Timer-driven QR refresh every 30 seconds
+- **Site-specific** — Payload includes selected site code
+- **Entry/Exit toggle** — Dual scan mode support
+- **Geofence block** — QR hidden when outside site radius
+
+## Authentication
+
+- **Email/password** login
+- **Face ID / Touch ID** — LocalAuthentication framework
+- **Keychain storage** — Secure credential persistence
+- **JWT session management** — Token refresh on expiration
+
+## Geofencing
+
+- **CoreLocation** — CLLocationManager with `kCLLocationAccuracyBest`
+- **Real-time tracking** — Continuous location updates
+- **Distance calculation** — Haversine formula for distance to site center
+- **Status indicators** — Color-coded geofence status (green/red/yellow/blue)
+- **Permission handling** — Graceful degradation when location denied
+
+## Photo Management
+
+- **Camera capture** — UIImagePickerController / PHPicker
+- **Photo library** — Select from existing photos
+- **Compression** — JPEG quality reduction before upload
+- **Upload** — Multipart form data to backend
+
+## Schedule Viewer
+
+- **Per-site schedules** — Grouped by assigned site
+- **Visual cards** — Date range, allowed days, time window
+- **Active/expired** — Color-coded status badges
+- **Pull to refresh** — Swipe down to reload from server
+
+## Offline Support
+
+- **Cached schedules** — Local storage for offline viewing
+- **Offline indicator** — Banner when no network
+- **Data freshness** — Last sync timestamp display
+
+## Internationalization
+
+- **English + Arabic** — Full translation coverage
+- **RTL layout** — Automatic via SwiftUI `.environment(\.layoutDirection)`
+- **Language toggle** — In-app switch without restart
+- **Localizable.strings** — Standard iOS localization
+
+## Accessibility
+
+- **VoiceOver** — Full accessibility labels and hints
+- **Dynamic Type** — Respects system font size preferences
+- **Reduce Motion** — Adapts animations

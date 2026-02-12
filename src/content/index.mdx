@@ -1,0 +1,54 @@
+# Contractor Access Management System (CAMS)
+
+CAMS is a comprehensive, multi-platform contractor access management solution built for enterprise site security. It uses **TOTP-based QR codes** (RFC 6238) for secure, time-rotating contractor authentication at physical sites.
+
+## What is CAMS?
+
+CAMS replaces traditional paper-based or badge-based contractor access systems with a modern, digital solution:
+
+- **Contractors** generate time-rotating QR codes on their mobile devices
+- **Security guards** scan QR codes to validate access in real-time
+- **Administrators** manage everything from a centralized web portal
+
+## Platform Coverage
+
+| Platform | App | Technology |
+|----------|-----|-----------|
+| Android | Contractor App | Kotlin + Jetpack Compose |
+| Android | Scanner App | Kotlin + Jetpack Compose + CameraX + ML Kit |
+| iOS | Contractor App | Swift + SwiftUI |
+| iOS | Scanner App | Swift + SwiftUI + AVFoundation |
+| Web | Admin Portal | Next.js 16 + TypeScript + tRPC |
+| Backend | REST API | Go + Gin + PostgreSQL |
+
+## Core Features
+
+### Security
+- **TOTP tokens** — 30-second rotating codes using HMAC-SHA256
+- **Device binding** — Unique device fingerprints prevent credential sharing
+- **Geofencing** — GPS-based location verification per site
+- **Root/jailbreak detection** — Blocks compromised devices
+- **Screenshot prevention** — FLAG_SECURE on Android, screenshot detection on iOS
+- **Encrypted storage** — AES-256-GCM for credentials, biometric unlock
+
+### Access Control
+- **Role-based admin access** — Super Admin, Site Admin, Viewer, Auditor
+- **Time-based schedules** — Configurable allowed days and hours per contractor per site
+- **Entry/Exit tracking** — Dual scan modes with full audit trail
+- **Emergency override** — Guards can manually grant/deny with logged reasons
+
+### Management
+- **Bulk import/export** — CSV/Excel for contractors and schedules
+- **Real-time dashboard** — Live site map, charts, and activity monitoring
+- **Bilingual** — Full English and Arabic support with RTL layout
+- **Comprehensive audit trail** — Every scan logged with timestamp, location, and result
+
+## System Requirements
+
+| Component | Requirement |
+|-----------|------------|
+| Android | API 26+ (Android 8.0+) |
+| iOS | iOS 16.0+ |
+| Admin Portal | Modern browser (Chrome, Firefox, Safari, Edge) |
+| Backend | Go 1.21+, PostgreSQL 15+ |
+| Node.js | 18.17+ (for admin portal development) |

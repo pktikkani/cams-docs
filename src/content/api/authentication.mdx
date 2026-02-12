@@ -1,0 +1,115 @@
+# Authentication API
+
+## Contractor Login
+
+```
+POST /api/v1/auth/login
+```
+
+### Request Body
+
+```json
+{
+  "email": "john.doe@contractor.com",
+  "password": "password123",
+  "device_fingerprint": "a1b2c3d4e5f6"
+}
+```
+
+### Success Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "contractor": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "full_name": "John Doe",
+      "email": "john.doe@contractor.com",
+      "company": "Acme Corp",
+      "totp_seed": "JBSWY3DPEHPK3PXP",
+      "photo_url": "https://...",
+      "is_active": true
+    }
+  }
+}
+```
+
+### Error Response (401)
+
+```json
+{
+  "status": "error",
+  "message": "Invalid credentials"
+}
+```
+
+## Guard Login
+
+```
+POST /api/v1/scanner/login
+```
+
+### Request Body
+
+```json
+{
+  "email": "guard@security.com",
+  "password": "guardpass123",
+  "device_fingerprint": "x9y8z7w6v5u4"
+}
+```
+
+### Success Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "guard": {
+      "id": "uuid",
+      "name": "Security Guard",
+      "assigned_site": {
+        "id": "uuid",
+        "site_code": "NAMA-HQ-001",
+        "site_name": "NAMA Headquarters"
+      }
+    }
+  }
+}
+```
+
+## Device Registration
+
+```
+POST /api/v1/devices/register
+```
+
+### Headers
+```
+Authorization: Bearer <contractor-token>
+```
+
+### Request Body
+
+```json
+{
+  "device_fingerprint": "a1b2c3d4e5f6",
+  "device_name": "Samsung Galaxy S24",
+  "platform": "android"
+}
+```
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "device_id": "uuid",
+    "is_active": true
+  }
+}
+```

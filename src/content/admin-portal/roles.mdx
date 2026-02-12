@@ -1,0 +1,81 @@
+# Roles & Permissions
+
+The admin portal implements role-based access control (RBAC) with four distinct roles.
+
+## Role Hierarchy
+
+```
+Super Admin (full access)
+    ↓
+Site Admin (CRUD, no settings)
+    ↓
+Viewer (read-only)
+    ↓
+Auditor (dashboard + logs only)
+```
+
+## Permission Matrix
+
+| Feature | Super Admin | Site Admin | Viewer | Auditor |
+|---------|:-----------:|:----------:|:------:|:-------:|
+| **Dashboard** | ✅ | ✅ | ✅ | ✅ |
+| **View Contractors** | ✅ | ✅ | ✅ | ❌ |
+| **Create/Edit Contractors** | ✅ | ✅ | ❌ | ❌ |
+| **View Sites** | ✅ | ✅ | ✅ | ❌ |
+| **Create/Edit Sites** | ✅ | ✅ | ❌ | ❌ |
+| **View Schedules** | ✅ | ✅ | ✅ | ❌ |
+| **Create/Edit Schedules** | ✅ | ✅ | ❌ | ❌ |
+| **View Scanners** | ✅ | ✅ | ✅ | ❌ |
+| **Manage Scanners** | ✅ | ✅ | ❌ | ❌ |
+| **View Scan Logs** | ✅ | ✅ | ✅ | ✅ |
+| **Export Data** | ✅ | ✅ | ✅ | ✅ |
+| **Import Data** | ✅ | ✅ | ❌ | ❌ |
+| **Manage Admins** | ✅ | ❌ | ❌ | ❌ |
+| **System Settings** | ✅ | ❌ | ❌ | ❌ |
+
+## Sidebar Navigation
+
+The sidebar dynamically shows/hides menu items based on the user's role:
+
+| Menu Item | Visible To |
+|-----------|-----------|
+| Dashboard | All roles |
+| Contractors | Super Admin, Site Admin, Viewer |
+| Sites | Super Admin, Site Admin, Viewer |
+| Schedules | Super Admin, Site Admin, Viewer |
+| Scanners | Super Admin, Site Admin, Viewer |
+| Scan Logs | All roles |
+| Settings | Super Admin only |
+
+## Implementation
+
+Roles are enforced at both the **UI level** (conditional rendering) and the **API level** (tRPC middleware):
+
+### API Middleware
+```typescript
+// Only super_admin and site_admin can execute
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.session.role === "viewer" || ctx.session.role === "auditor") {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return next({ ctx });
+});
+```
+
+### UI Filtering
+```typescript
+// Sidebar filters menu items by role
+const visibleItems = allNavItems.filter(
+  (item) => !item.roles || item.roles.includes(user.role)
+);
+```
+
+## Creating Admin Users
+
+Only Super Admins can create new admin accounts via Settings → Add Admin:
+
+1. Enter full name, email, password (min 8 characters)
+2. Select role from dropdown
+3. Click "Create Admin"
+
+Passwords are hashed with bcrypt before storage.

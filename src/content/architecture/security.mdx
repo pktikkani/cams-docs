@@ -1,0 +1,99 @@
+# Security Model
+
+CAMS implements defense-in-depth with multiple security layers to prevent unauthorized access and credential abuse.
+
+## Authentication
+
+### Contractor Authentication
+1. **Email/password login** with bcrypt-hashed passwords
+2. **Device fingerprinting** — Unique device ID bound to contractor account
+3. **Biometric unlock** — Fingerprint/Face ID for subsequent app opens
+4. **JWT tokens** — Short-lived access tokens with refresh mechanism
+
+### Guard Authentication
+1. **Email/password login** with device fingerprint registration
+2. **Site assignment** — Guards are bound to specific sites
+3. **Session management** — Persistent token storage
+
+### Admin Authentication
+1. **Email/password login** with bcrypt-hashed passwords
+2. **JWT in httpOnly cookies** — Prevents XSS token theft
+3. **Role-based access control** — 4 roles with granular permissions
+
+## TOTP (Time-based One-Time Password)
+
+The core of CAMS security is the TOTP system:
+
+| Parameter | Value |
+|-----------|-------|
+| Algorithm | HMAC-SHA256 |
+| Period | 30 seconds |
+| Digits | 6 |
+| Seed | Per-contractor unique Base32-encoded secret |
+| Standard | RFC 6238 / RFC 4226 |
+
+### QR Code Payload Structure
+```json
+{
+  "contractor_id": "uuid",
+  "timestamp": 1700000000,
+  "totp": "123456",
+  "site_code": "SITE-001",
+  "nonce": "unique-uuid",
+  "device_fingerprint": "device-hash",
+  "access_mode": "entry"
+}
+```
+
+The payload is **Base64-encoded** before being rendered as a QR code.
+
+## Device Security
+
+### Root/Jailbreak Detection (Android)
+- Checks 13+ common `su` binary paths
+- Detects `test-keys` in build tags
+- Scans for 15+ known root management apps (Magisk, SuperSU, etc.)
+- **Kills process** immediately if root is detected
+
+### Screenshot Prevention
+- **Android**: `FLAG_SECURE` on all windows containing QR codes
+- **iOS**: Screenshot detection via `UIApplication.userDidTakeScreenshotNotification`
+
+### Encrypted Storage
+- **Android**: `EncryptedSharedPreferences` with AES-256-GCM (MasterKey)
+- **iOS**: Keychain Services with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
+
+## Geofencing
+
+Each site has configurable GPS coordinates and a geofence radius:
+
+- Contractor app checks device location against site coordinates
+- QR code generation is **blocked** when outside the geofence
+- Distance to site boundary is displayed in real-time
+- Guards can see geofence violations in scan results
+
+### Geofence States
+| State | Color | Description |
+|-------|-------|-------------|
+| Within Range | Green | Inside geofence, QR generation allowed |
+| Outside Range | Red | Outside geofence, QR blocked |
+| Permission Denied | Red | Location permission not granted |
+| Acquiring GPS | Yellow | Waiting for location fix |
+| No Geofence | Blue | Site has no geofence configured |
+
+## Role-Based Access Control (Admin Portal)
+
+| Role | Dashboard | Contractors | Sites | Schedules | Scanners | Logs | Settings |
+|------|-----------|-------------|-------|-----------|----------|------|----------|
+| Super Admin | ✅ | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ | ✅ |
+| Site Admin | ✅ | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ CRUD | ✅ | ❌ |
+| Viewer | ✅ | 👁️ Read | 👁️ Read | 👁️ Read | 👁️ Read | ✅ | ❌ |
+| Auditor | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+
+## Network Security
+
+- All API communication over **HTTPS/TLS**
+- JWT tokens with expiration and refresh
+- **httpOnly cookies** for admin portal (prevents XSS)
+- Request authentication via `Authorization: Bearer <token>` header
+- Input validation using Zod schemas on all endpoints

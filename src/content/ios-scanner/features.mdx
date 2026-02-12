@@ -1,0 +1,76 @@
+# Scanner App Features (iOS)
+
+## QR Code Scanning
+
+- **AVFoundation** — Native iOS camera framework
+- **AVCaptureSession** — Real-time video capture
+- **AVMetadataOutput** — Built-in QR code detection (no ML library needed)
+- **Animated overlay** — Scan region indicator with corner brackets
+- **Debounce** — Prevents duplicate scans within 2 seconds
+- **Auto-reset** — Returns to scanning after 8 seconds
+- **Haptic feedback** — UIImpactFeedbackGenerator on detection
+
+## Access Control Display
+
+### Granted
+- Green themed result card
+- Contractor photo (AsyncImage with placeholder)
+- Name, company, email details
+- Smooth transition animation
+
+### Denied
+- Red themed result card
+- Denial reason prominently displayed
+- Contractor info (if available)
+
+## Entry/Exit Modes
+
+- Segmented control for mode selection
+- Visual color coding (green = entry, red = exit)
+- Mode included in validation request
+
+## Emergency Override
+
+- Sheet presentation for override flow
+- Grant or Deny picker
+- Required reason text field
+- Logged with yellow warning badge
+- Guard ID and timestamp recorded
+
+## Scan History
+
+Local audit log with search and filtering:
+
+- **UserDefaults storage** — Codable structs with JSON encoding
+- **Search** — Full-text search across contractor name, company, email
+- **Filter** — All / Granted / Denied segmented control
+- **Persistent** — Survives app restart
+- **Max entries** — 500 with FIFO trimming
+
+## Offline Support
+
+- **Local cache** — Previously validated contractors stored
+- **48-hour window** — Cache entries expire after 48 hours
+- **Offline badge** — Visual indicator in header
+- **Automatic sync** — Queued validations sent on reconnect
+
+## Guard Features
+
+- Site assignment and switching
+- Guard name displayed in header
+- Online/offline status badge
+- Language toggle (EN/AR)
+
+## Internationalization
+
+- **Localizable.strings** — EN and AR translations
+- **RTL support** — Automatic via SwiftUI environment
+- **In-app toggle** — Switch without leaving the app
+- **Persistent** — Language preference saved to UserDefaults
+
+## Accessibility
+
+- **VoiceOver** — Full accessibility labels
+- **Dynamic Type** — Adapts to system font size
+- **High Contrast** — Respects increased contrast setting
+- **Reduce Motion** — Simplified animations

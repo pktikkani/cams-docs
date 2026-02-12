@@ -1,0 +1,64 @@
+# API Reference
+
+The CAMS backend exposes a REST API consumed by all mobile apps and the admin portal.
+
+## Base URL
+
+```
+https://contractor-api.nubewired.com
+```
+
+## Authentication
+
+All authenticated endpoints require a JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <jwt-token>
+```
+
+## API Versioning
+
+All endpoints are prefixed with `/api/v1/`.
+
+## Response Format
+
+All responses follow a standard JSON format:
+
+```json
+{
+  "status": "success",
+  "data": { ... }
+}
+```
+
+Error responses:
+
+```json
+{
+  "status": "error",
+  "message": "Description of what went wrong"
+}
+```
+
+## Endpoint Summary
+
+### Contractor Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/auth/login` | Contractor login |
+| `GET` | `/api/v1/contractor/profile` | Get contractor profile |
+| `GET` | `/api/v1/access/schedule` | Get access schedules |
+| `POST` | `/api/v1/contractor/photo` | Upload contractor photo |
+| `POST` | `/api/v1/devices/register` | Register contractor device |
+
+### Scanner Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/scanner/login` | Guard login |
+| `GET` | `/api/v1/scanner/sites` | List available sites |
+| `POST` | `/api/v1/scanner/assign-site` | Assign guard to site |
+| `GET` | `/api/v1/scanner/assigned-site` | Get current assignment |
+| `POST` | `/api/v1/scanner/validate` | Validate QR code |
+
+### Admin Endpoints (tRPC)
+The admin portal uses **tRPC** procedures instead of REST. See the [Admin Portal](/docs/admin-portal/trpc) section for details.
