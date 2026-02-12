@@ -63,27 +63,30 @@ This creates all required tables:
 
 ## Infrastructure Diagram
 
-```
-┌──────────────┐
-│   Vercel /   │
-│  Railway     │◄── Admin Portal (Next.js)
-└──────┬───────┘
-       │
-       ▼ DATABASE_URL
-┌──────────────┐
-│  PostgreSQL  │◄── Shared Database
-│  (Railway)   │
-└──────┬───────┘
-       │
-       ▼
-┌──────────────┐
-│  Go Backend  │◄── REST API
-│  (Railway)   │
-└──────────────┘
-       ▲
-       │ HTTPS
-┌──────┴───────┐
-│ Mobile Apps  │
-│ (iOS/Android)│
-└──────────────┘
+```mermaid
+graph TB
+    subgraph Clients
+        IOS[📱 iOS Apps]
+        AND[📱 Android Apps]
+        WEB[🌐 Browser]
+    end
+
+    subgraph Hosting
+        AP[🖥️ Admin Portal<br/>Vercel / Railway]
+        BE[⚙️ Go Backend<br/>Railway]
+        DB[(🐘 PostgreSQL<br/>Railway)]
+    end
+
+    WEB -->|HTTPS| AP
+    AP -->|DATABASE_URL| DB
+    BE -->|SQL| DB
+    IOS -->|HTTPS REST| BE
+    AND -->|HTTPS REST| BE
+
+    style AP fill:#10b981,color:#fff
+    style BE fill:#f59e0b,color:#fff
+    style DB fill:#3b82f6,color:#fff
+    style IOS fill:#06b6d4,color:#fff
+    style AND fill:#06b6d4,color:#fff
+    style WEB fill:#8b5cf6,color:#fff
 ```

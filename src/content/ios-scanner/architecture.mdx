@@ -51,33 +51,35 @@ ContractorQRScanner/
 
 ## Camera Pipeline
 
-```
-AVCaptureSession
-    ↓
-AVCaptureDeviceInput (back camera)
-    ↓
-AVCaptureVideoPreviewLayer → SwiftUI UIViewRepresentable
-    ↓
-AVCaptureMetadataOutput (delegate)
-    ↓
-metadataOutput(_:didOutput:) → QR string value
-    ↓
-ScannerViewModel.handleQRDetected(value:)
-    ↓
-API: POST /api/v1/scanner/validate
-    ↓
-Update @Published scanState → UI recomposition
+```mermaid
+flowchart TD
+    A[AVCaptureSession] --> B[AVCaptureDeviceInput<br/>Back Camera]
+    A --> C[AVCaptureVideoPreviewLayer<br/>→ SwiftUI UIViewRepresentable]
+    A --> D[AVCaptureMetadataOutput]
+    D --> E[metadataOutput delegate<br/>→ QR String Value]
+    E --> F{Debounce?}
+    F -->|Too soon| D
+    F -->|OK| G[ScannerViewModel<br/>.handleQRDetected]
+    G --> H[POST /api/v1/scanner/validate]
+    H --> I[Update @Published scanState]
+    I --> J[SwiftUI Recomposition]
+    J -->|8s auto-reset| D
+
+    style A fill:#f59e0b,color:#fff
+    style H fill:#3b82f6,color:#fff
+    style I fill:#22c55e,color:#fff
 ```
 
 ## State Machine
 
-```swift
-enum ScanState {
-    case scanning        // Camera active
-    case validating      // API call in progress
-    case result(Result)  // Granted or Denied
-    case error(String)   // Network/parse error
-}
+```mermaid
+stateDiagram-v2
+    [*] --> Scanning
+    Scanning --> Validating : QR detected
+    Validating --> Result : API response
+    Validating --> Error : Network/parse error
+    Result --> Scanning : 8s auto-reset
+    Error --> Scanning : 5s auto-reset
 ```
 
 ## Data Persistence

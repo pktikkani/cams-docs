@@ -43,25 +43,28 @@ com.pragmatic.contractorqrscanner/
 
 **MVVM** with StateFlow:
 
-```
-ScannerScreen (UI)
-    ↕ observes StateFlow
-ScannerViewModel (Logic)
-    ↕ calls
-ApiService (Network)
-    ↕ HTTP
-Backend API
+```mermaid
+graph TD
+    UI[🖥️ ScannerScreen<br/>Jetpack Compose] <-->|observes StateFlow| VM[🧠 ScannerViewModel<br/>Business Logic]
+    VM <-->|calls| API[🌐 ApiService<br/>Retrofit + OkHttp]
+    API <-->|HTTPS| BE[⚙️ Backend API]
+
+    style UI fill:#06b6d4,color:#fff
+    style VM fill:#f59e0b,color:#fff
+    style API fill:#10b981,color:#fff
+    style BE fill:#3b82f6,color:#fff
 ```
 
 ## State Machine
 
-```kotlin
-sealed class ScanUiState {
-    object Scanning     // Camera active, awaiting QR
-    object Validating   // Loading, calling backend
-    data class Result   // Showing granted/denied
-    data class Error    // Network/parse error
-}
+```mermaid
+stateDiagram-v2
+    [*] --> Scanning
+    Scanning --> Validating : QR detected
+    Validating --> Result : API response
+    Validating --> Error : Network/parse error
+    Result --> Scanning : 8s auto-reset
+    Error --> Scanning : 5s auto-reset
 ```
 
 ### Timing Constants
@@ -77,20 +80,24 @@ sealed class ScanUiState {
 
 ## Camera Pipeline
 
-```
-CameraX Provider
-    ↓
-Preview Use Case → SurfaceView
-    ↓
-ImageAnalysis Use Case → ML Kit BarcodeScanner
-    ↓
-QR Detected → Extract value → Debounce check
-    ↓
-ScannerViewModel.onQRScanned(data)
-    ↓
-API Call: POST /api/v1/scanner/validate
-    ↓
-Update ScanUiState → UI recomposition
+```mermaid
+flowchart TD
+    A[CameraX Provider] --> B[Preview Use Case<br/>→ SurfaceView]
+    A --> C[ImageAnalysis Use Case<br/>→ ML Kit BarcodeScanner]
+    C --> D{QR Detected?}
+    D -->|No| C
+    D -->|Yes| E[Extract Value]
+    E --> F{Debounce<br/>2s cooldown?}
+    F -->|Too soon| C
+    F -->|OK| G[ScannerViewModel.onQRScanned]
+    G --> H[POST /api/v1/scanner/validate]
+    H --> I[Update ScanUiState]
+    I --> J[UI Recomposition]
+    J -->|8s auto-reset| C
+
+    style D fill:#f59e0b,color:#fff
+    style H fill:#3b82f6,color:#fff
+    style I fill:#22c55e,color:#fff
 ```
 
 ## Permissions

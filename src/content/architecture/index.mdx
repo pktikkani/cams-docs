@@ -4,31 +4,28 @@ CAMS follows a client-server architecture with multiple mobile clients connectin
 
 ## High-Level Architecture
 
-```
-┌─────────────────┐     ┌─────────────────┐
-│  Contractor App │     │   Scanner App   │
-│  (iOS/Android)  │     │  (iOS/Android)  │
-└────────┬────────┘     └────────┬────────┘
-         │                       │
-         │   HTTPS/REST API      │
-         ▼                       ▼
-┌──────────────────────────────────────────┐
-│           Go Backend (Gin)               │
-│  ┌────────┐ ┌──────────┐ ┌───────────┐  │
-│  │  Auth  │ │ Validate │ │  Devices  │  │
-│  └────────┘ └──────────┘ └───────────┘  │
-│  ┌────────┐ ┌──────────┐ ┌───────────┐  │
-│  │  TOTP  │ │Geofence  │ │  Logging  │  │
-│  └────────┘ └──────────┘ └───────────┘  │
-└────────────────┬─────────────────────────┘
-                 │
-         ┌───────┴───────┐
-         ▼               ▼
-┌─────────────┐  ┌──────────────┐
-│ PostgreSQL  │  │   Admin      │
-│  Database   │  │   Portal     │
-│  (Railway)  │  │  (Next.js)   │
-└─────────────┘  └──────────────┘
+```mermaid
+graph TD
+    CA[📱 Contractor App<br/>iOS / Android] -->|HTTPS REST API| BE
+    SA[📷 Scanner App<br/>iOS / Android] -->|HTTPS REST API| BE
+
+    BE[⚙️ Go Backend - Gin]
+
+    subgraph Backend Services
+        direction LR
+        AUTH[Auth] --- VALIDATE[Validate] --- DEVICES[Devices]
+        TOTP[TOTP] --- GEOFENCE[Geofence] --- LOGGING[Logging]
+    end
+
+    BE --> Backend Services
+    BE -->|SQL| DB[(🐘 PostgreSQL<br/>Railway)]
+    DB --- AP[🖥️ Admin Portal<br/>Next.js 16]
+
+    style CA fill:#06b6d4,color:#fff
+    style SA fill:#06b6d4,color:#fff
+    style BE fill:#f59e0b,color:#fff
+    style DB fill:#3b82f6,color:#fff
+    style AP fill:#10b981,color:#fff
 ```
 
 ## Technology Stack
@@ -78,6 +75,61 @@ CAMS follows a client-server architecture with multiple mobile clients connectin
 | `admin_users` | Portal admin accounts with role-based access |
 | `scanner_devices` | Registered scanner tablets |
 | `devices` | Contractor device registrations |
+
+### Entity Relationships
+
+```mermaid
+erDiagram
+    contractors ||--o{ access_schedules : "has"
+    contractors ||--o{ devices : "registers"
+    contractors ||--o{ scan_logs : "scanned"
+    sites ||--o{ access_schedules : "assigned"
+    sites ||--o{ scan_logs : "at"
+    sites ||--o{ scanner_devices : "deployed"
+    scanner_devices ||--o{ scan_logs : "records"
+
+    contractors {
+        uuid id PK
+        string email
+        string first_name
+        string last_name
+        string totp_seed
+        boolean is_active
+    }
+
+    sites {
+        uuid id PK
+        string site_code
+        string site_name
+        float latitude
+        float longitude
+        int geofence_radius
+    }
+
+    access_schedules {
+        uuid id PK
+        uuid contractor_id FK
+        uuid site_id FK
+        date start_date
+        date end_date
+        array allowed_days
+    }
+
+    scan_logs {
+        uuid id PK
+        uuid contractor_id FK
+        uuid site_id FK
+        string scan_result
+        timestamp scan_timestamp
+    }
+
+    admin_users {
+        uuid id PK
+        string email
+        string role
+        boolean is_active
+    }
+```
 
 ### Key Relationships
 - A contractor can have **multiple access schedules** across different sites

@@ -25,22 +25,27 @@ The iOS Scanner App is used by security guards to scan and validate contractor Q
 
 ## Navigation
 
-```
-Login Screen
-    ↓ (guard email + password)
-Site Selection
-    ↓ (choose assigned site)
-Main TabView
-    ├── Scanner Tab
-    │   ├── Header (guard name, site, status)
-    │   ├── Entry/Exit toggle
-    │   ├── Camera viewfinder with overlay
-    │   ├── Result overlay (Granted/Denied)
-    │   └── Emergency override sheet
-    └── History Tab
-        ├── Search
-        ├── Filter (All / Granted / Denied)
-        └── Scan log list
+```mermaid
+flowchart TD
+    LOGIN[🔐 Login Screen<br/>Guard Email + Password] --> SITE[📍 Site Selection]
+    SITE --> MAIN[Main TabView]
+
+    MAIN --> SCAN[📷 Scanner Tab]
+    MAIN --> HIST[📋 History Tab]
+
+    SCAN --> S1[Header: Guard + Site + Status]
+    SCAN --> S2[Entry / Exit Toggle]
+    SCAN --> S3[Camera Viewfinder + Overlay]
+    SCAN --> S4[Result Overlay: Granted / Denied]
+    SCAN --> S5[Emergency Override Sheet]
+
+    HIST --> H1[Search]
+    HIST --> H2[Filter: All / Granted / Denied]
+    HIST --> H3[Scan Log List]
+
+    style LOGIN fill:#06b6d4,color:#fff
+    style SCAN fill:#22c55e,color:#fff
+    style HIST fill:#f59e0b,color:#fff
 ```
 
 ## Scan Flow

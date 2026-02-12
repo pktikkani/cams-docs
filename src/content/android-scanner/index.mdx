@@ -28,22 +28,27 @@ The Android Scanner App is used by security guards to scan and validate contract
 
 ## Navigation
 
-```
-Login Screen
-    ↓ (guard email + password + device fingerprint)
-Site Selection Screen
-    ↓ (choose assigned site)
-Main Screen (Tab Navigation)
-    ├── Scanner Tab
-    │   ├── Header (guard name, site, status)
-    │   ├── Entry/Exit mode toggle
-    │   ├── Camera preview with scan overlay
-    │   ├── Result display (Granted/Denied)
-    │   └── Emergency override
-    └── History Tab
-        ├── Search bar
-        ├── Filter (All / Granted / Denied)
-        └── Scrollable audit log
+```mermaid
+flowchart TD
+    LOGIN[🔐 Login Screen<br/>Guard Email + Password] --> SITE[📍 Site Selection]
+    SITE --> MAIN[Main Screen]
+
+    MAIN --> SCAN[📷 Scanner Tab]
+    MAIN --> HIST[📋 History Tab]
+
+    SCAN --> S1[Header: Guard + Site + Status]
+    SCAN --> S2[Entry / Exit Toggle]
+    SCAN --> S3[Camera Preview + Overlay]
+    SCAN --> S4[Result: Granted / Denied]
+    SCAN --> S5[Emergency Override]
+
+    HIST --> H1[Search Bar]
+    HIST --> H2[Filter: All / Granted / Denied]
+    HIST --> H3[Scrollable Audit Log]
+
+    style LOGIN fill:#06b6d4,color:#fff
+    style SCAN fill:#22c55e,color:#fff
+    style HIST fill:#f59e0b,color:#fff
 ```
 
 ## Scan Flow

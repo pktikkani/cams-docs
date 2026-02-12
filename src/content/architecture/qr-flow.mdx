@@ -4,21 +4,26 @@ This page documents the end-to-end flow of QR code generation, scanning, and val
 
 ## Generation Flow (Contractor App)
 
-```
-1. Contractor opens app
-2. Biometric authentication (if enabled)
-3. Select target site from assigned sites
-4. App checks geofence:
-   ├─ Outside range → Block QR, show distance
-   └─ Within range → Continue
-5. App generates TOTP token:
-   ├─ Read contractor's Base32 TOTP seed
-   ├─ Calculate current 30-second time step
-   ├─ Generate 6-digit HMAC-SHA256 token
-   └─ Create QR payload (JSON → Base64)
-6. Render QR code on screen
-7. Start 30-second countdown timer
-8. Auto-regenerate when timer expires
+```mermaid
+flowchart TD
+    A[Open App] --> B{Biometric Auth?}
+    B -->|Enabled| C[Face ID / Fingerprint]
+    B -->|Disabled| D[Select Target Site]
+    C --> D
+    D --> E{Inside Geofence?}
+    E -->|Outside Range| F[❌ Block QR<br/>Show Distance]
+    E -->|Within Range| G[Read TOTP Seed]
+    G --> H[Calculate 30s Time Step]
+    H --> I[Generate 6-digit<br/>HMAC-SHA256 Token]
+    I --> J[Create QR Payload<br/>JSON → Base64]
+    J --> K[🔲 Render QR Code]
+    K --> L[Start 30s Countdown]
+    L -->|Timer Expires| G
+
+    style F fill:#ef4444,color:#fff
+    style K fill:#22c55e,color:#fff
+    style G fill:#06b6d4,color:#fff
+    style I fill:#06b6d4,color:#fff
 ```
 
 ## QR Payload
@@ -49,33 +54,40 @@ The QR code contains a Base64-encoded JSON payload:
 
 ## Validation Flow (Scanner App → Backend)
 
-```
-1. Guard opens scanner app
-2. Login with email/password + device fingerprint
-3. Select assigned site (or auto-assigned)
-4. Choose scan mode: Entry or Exit
-5. Camera activates with ML Kit (Android) / AVFoundation (iOS)
-6. QR code detected → Extract Base64 data
-7. Send to backend: POST /api/v1/scanner/validate
-   {
-     "qr_data": "<base64-string>",
-     "scanner_site_code": "NAMA-HQ-001",
-     "scan_mode": "entry"
-   }
-8. Backend validates:
-   ├─ Decode Base64 → Parse JSON
-   ├─ Verify TOTP token matches contractor's seed
-   ├─ Check site_code matches scanner's assigned site
-   ├─ Check nonce hasn't been used before
-   ├─ Check device_fingerprint matches registered device
-   ├─ Check contractor has active access schedule
-   ├─ Check current time is within allowed hours/days
-   └─ Check contractor account is active
-9. Return result:
-   ├─ ACCESS GRANTED → Contractor name, photo, company
-   └─ ACCESS DENIED → Reason (expired, wrong site, etc.)
-10. Scanner app shows result with contractor photo
-11. Auto-reset after 8 seconds for next scan
+```mermaid
+sequenceDiagram
+    participant G as 👮 Guard
+    participant S as 📷 Scanner App
+    participant B as ⚙️ Backend API
+    participant DB as 🐘 PostgreSQL
+
+    G->>S: Open app & login
+    G->>S: Select site + scan mode
+    S->>S: Activate camera (ML Kit / AVFoundation)
+
+    rect rgb(240, 249, 255)
+        Note over S: QR Code Detected
+        S->>S: Extract Base64 data
+        S->>B: POST /api/v1/scanner/validate
+        B->>B: Decode Base64 → Parse JSON
+        B->>DB: Verify TOTP against contractor seed
+        DB-->>B: Contractor data
+        B->>B: Check site match
+        B->>B: Check nonce (replay prevention)
+        B->>B: Check device fingerprint
+        B->>DB: Check active schedule + time/day
+        DB-->>B: Schedule data
+    end
+
+    alt Access Granted
+        B-->>S: ✅ GRANTED + contractor info
+        S->>G: Show name, photo, company
+    else Access Denied
+        B-->>S: ❌ DENIED + reason
+        S->>G: Show denial reason
+    end
+
+    Note over S: Auto-reset after 8 seconds
 ```
 
 ## Validation Checks (Backend)

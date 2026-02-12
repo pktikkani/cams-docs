@@ -28,22 +28,30 @@ The Android Contractor App enables contractors to securely generate time-rotatin
 
 ## Navigation
 
-```
-Login Screen
-    ↓ (email + password + biometric)
-Main Screen (Bottom Navigation)
-    ├── QR Code Tab
-    │   ├── Site selector (chips)
-    │   ├── Entry/Exit toggle
-    │   ├── QR code display with countdown
-    │   └── Geofence status banner
-    ├── Schedule Tab
-    │   └── List of access schedules per site
-    └── Profile Tab
-        ├── Contractor info
-        ├── Photo upload
-        ├── Security features status
-        └── Logout
+```mermaid
+flowchart TD
+    LOGIN[🔐 Login Screen<br/>Email + Password + Biometric] --> MAIN[Main Screen]
+
+    MAIN --> QR[🔲 QR Code Tab]
+    MAIN --> SCHED[📅 Schedule Tab]
+    MAIN --> PROF[👤 Profile Tab]
+
+    QR --> Q1[Site Selector Chips]
+    QR --> Q2[Entry / Exit Toggle]
+    QR --> Q3[QR Code + Countdown]
+    QR --> Q4[Geofence Status Banner]
+
+    SCHED --> S1[Access Schedules per Site]
+
+    PROF --> P1[Contractor Info]
+    PROF --> P2[Photo Upload]
+    PROF --> P3[Security Features]
+    PROF --> P4[Logout]
+
+    style LOGIN fill:#06b6d4,color:#fff
+    style QR fill:#22c55e,color:#fff
+    style SCHED fill:#f59e0b,color:#fff
+    style PROF fill:#8b5cf6,color:#fff
 ```
 
 ## API Connection

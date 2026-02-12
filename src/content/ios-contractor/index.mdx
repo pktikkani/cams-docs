@@ -26,21 +26,29 @@ The iOS Contractor App enables contractors to generate TOTP-based QR codes for s
 
 ## Navigation
 
-```
-Login Screen
-    ↓ (email + password + biometric)
-Main TabView
-    ├── QR Code Tab
-    │   ├── Site picker
-    │   ├── Entry/Exit toggle
-    │   ├── QR code with countdown ring
-    │   └── Geofence status
-    ├── Schedule Tab
-    │   └── Access schedules list
-    └── Profile Tab
-        ├── Contractor info + photo
-        ├── Security features
-        └── Logout
+```mermaid
+flowchart TD
+    LOGIN[🔐 Login Screen<br/>Email + Password + Biometric] --> MAIN[Main TabView]
+
+    MAIN --> QR[🔲 QR Code Tab]
+    MAIN --> SCHED[📅 Schedule Tab]
+    MAIN --> PROF[👤 Profile Tab]
+
+    QR --> Q1[Site Picker]
+    QR --> Q2[Entry / Exit Toggle]
+    QR --> Q3[QR Code + Countdown Ring]
+    QR --> Q4[Geofence Status]
+
+    SCHED --> S1[Access Schedules List]
+
+    PROF --> P1[Contractor Info + Photo]
+    PROF --> P2[Security Features]
+    PROF --> P3[Logout]
+
+    style LOGIN fill:#06b6d4,color:#fff
+    style QR fill:#22c55e,color:#fff
+    style SCHED fill:#f59e0b,color:#fff
+    style PROF fill:#8b5cf6,color:#fff
 ```
 
 ## API Connection
