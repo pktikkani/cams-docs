@@ -4,10 +4,12 @@
 
 The Go backend is deployed as a containerized service:
 
-- **Hosting**: Railway (PaaS)
+- **Hosting**: Railway (PaaS) — production; Docker Compose — local/Oman DC
 - **URL**: `https://contractor-api.nubewired.com`
-- **Database**: PostgreSQL 15 on Railway
+- **Database**: PostgreSQL 16 on Railway
+- **Cache**: Redis 7 (nonce anti-replay)
 - **SSL**: Automatic TLS via Railway
+- **Go Version**: 1.24 (Dockerfile: `golang:1.24-alpine`)
 
 ## Admin Portal
 
@@ -35,6 +37,46 @@ npm install
 npm run build
 npm start
 ```
+
+## Docker Compose (Local / Oman DC)
+
+The full stack runs via `docker compose up -d` with 6 services:
+
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| `api` | Built from Dockerfile | 8080 | Go API server |
+| `postgres` | `postgres:16-alpine` | 5432 | Primary database |
+| `redis` | `redis:7-alpine` | 6379 | Nonce cache / anti-replay |
+| `prometheus` | `prom/prometheus:latest` | 9090 | Metrics scraping (15s interval) |
+| `loki` | `grafana/loki:3.0.0` | 3100 | Log aggregation (30-day retention) |
+| `grafana` | `grafana/grafana:latest` | 3000 | Dashboards + alerting |
+
+### Environment Variables (Docker)
+
+```bash
+# API service
+JWT_SECRET=your-jwt-secret
+HMAC_SECRET=your-hmac-secret
+LOKI_URL=http://loki:3100    # Enables structured log push to Loki
+
+# Grafana
+GF_SECURITY_ADMIN_USER=admin
+GF_SECURITY_ADMIN_PASSWORD=admin
+```
+
+### Quick Start
+
+```bash
+cd contractor-qr-api
+docker compose up -d
+```
+
+- API: `http://localhost:8080`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000` (admin/admin)
+- Loki: `http://localhost:3100`
+
+Grafana is auto-provisioned with datasources (Prometheus + Loki), two dashboards (API Overview + Security), and 6 alert rules.
 
 ## Mobile Apps
 
@@ -71,22 +113,42 @@ graph TB
         WEB[🌐 Browser]
     end
 
-    subgraph Hosting
+    subgraph "Application Layer"
         AP[🖥️ Admin Portal<br/>Vercel / Railway]
-        BE[⚙️ Go Backend<br/>Railway]
-        DB[(🐘 PostgreSQL<br/>Railway)]
+        BE[⚙️ Go Backend<br/>Railway / Docker]
+    end
+
+    subgraph "Data Layer"
+        DB[(🐘 PostgreSQL 16)]
+        RD[(Redis 7)]
+    end
+
+    subgraph "Observability Stack"
+        PROM[Prometheus<br/>:9090]
+        LOKI[Loki<br/>:3100]
+        GRAF[Grafana<br/>:3000]
     end
 
     WEB -->|HTTPS| AP
     AP -->|DATABASE_URL| DB
     BE -->|SQL| DB
+    BE -->|Nonce/Cache| RD
     IOS -->|HTTPS REST| BE
     AND -->|HTTPS REST| BE
+
+    BE -->|/metrics| PROM
+    BE -->|JSON logs| LOKI
+    PROM --> GRAF
+    LOKI --> GRAF
 
     style AP fill:#10b981,color:#fff
     style BE fill:#f59e0b,color:#fff
     style DB fill:#3b82f6,color:#fff
+    style RD fill:#dc2626,color:#fff
     style IOS fill:#06b6d4,color:#fff
     style AND fill:#06b6d4,color:#fff
     style WEB fill:#8b5cf6,color:#fff
+    style PROM fill:#e6522c,color:#fff
+    style LOKI fill:#2c3e50,color:#fff
+    style GRAF fill:#f46800,color:#fff
 ```

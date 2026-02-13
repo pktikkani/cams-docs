@@ -90,6 +90,28 @@ Each site has configurable GPS coordinates and a geofence radius:
 | Viewer | ✅ | 👁️ Read | 👁️ Read | 👁️ Read | 👁️ Read | ✅ | ❌ |
 | Auditor | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 
+## HMAC-SHA256 Request Signing (Layer 7)
+
+All mobile API requests are signed with HMAC-SHA256 to prevent tampering:
+
+| Component | Detail |
+|-----------|--------|
+| Algorithm | HMAC-SHA256 |
+| Signing data | `timestamp + "." + request_body` |
+| Headers | `X-Signature` (hex-encoded HMAC), `X-Timestamp` (Unix seconds) |
+| Key delivery | Returned in login response (`hmac_key` field) |
+| Freshness | Timestamp must be within 5 minutes of server time |
+
+The HMAC key is delivered per-session at login and stored in encrypted device storage (Keychain on iOS, EncryptedSharedPreferences on Android).
+
+## Nonce Anti-Replay (Layer 3)
+
+Each QR scan includes a unique nonce (UUID v4):
+
+- Stored in **Redis** with a 5-minute TTL after first use
+- Any repeated nonce is rejected as a replay attack
+- Redis errors are tracked via Prometheus (`redis_errors_total`) and trigger critical alerts
+
 ## Network Security
 
 - All API communication over **HTTPS/TLS**
@@ -97,3 +119,24 @@ Each site has configurable GPS coordinates and a geofence radius:
 - **httpOnly cookies** for admin portal (prevents XSS)
 - Request authentication via `Authorization: Bearer <token>` header
 - Input validation using Zod schemas on all endpoints
+
+## Observability & Security Monitoring
+
+The backend exposes Prometheus metrics and structured JSON logs for security monitoring:
+
+| Metric | Type | Purpose |
+|--------|------|---------|
+| `auth_failures_total{type}` | Counter | Tracks invalid_credentials, invalid_token, missing_signature, hmac_mismatch, signature_expired, account_disabled |
+| `scan_results_total{result,site_code}` | Counter | Tracks granted/denied scan outcomes per site |
+| `redis_errors_total{operation}` | Counter | Tracks Redis failures (nonce_check, nonce_set) |
+
+### Automated Alerts (Grafana)
+
+| Alert | Trigger | Severity |
+|-------|---------|----------|
+| Auth failure spike | >10 failures in 5 min | Critical |
+| HMAC rejection spike | >5 signature mismatches in 5 min | Critical |
+| Redis errors | Any Redis error | Critical |
+| High error rate | >5% 5xx responses for 5 min | Warning |
+| High latency | P95 > 2s for 5 min | Warning |
+| Scan denial anomaly | >80% denials in 15 min | Warning |

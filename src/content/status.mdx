@@ -13,7 +13,7 @@ Implementation status of all features specified in the NAMA-CAMS technical propo
 | Scanner App (iOS) | SwiftUI, AVFoundation | **Fully complete** |
 | Scanner App (Android) | Jetpack Compose, ML Kit | Core complete |
 | Admin Portal | Next.js 16, tRPC, shadcn/ui | **Fully complete** |
-| Backend API | Go/Fiber, PostgreSQL, Redis | Core + Admin CRUD complete |
+| Backend API | Go/Fiber, PostgreSQL, Redis | Core + Admin CRUD + Observability complete |
 
 ---
 
@@ -116,11 +116,12 @@ All 7 security layers from the proposal are implemented:
 
 ## Backend API
 
-### Implemented (48 endpoints)
+### Implemented (49 endpoints)
 
 | Category | Count | Status |
 |----------|-------|--------|
 | Health + public | 2 | DONE |
+| Metrics (`/metrics`) | 1 | DONE |
 | Contractor auth + profile | 4 | DONE |
 | QR validation | 2 | DONE |
 | Scanner auth + management | 6 | DONE |
@@ -146,6 +147,10 @@ All 7 security layers from the proposal are implemented:
 
 | Feature | Status |
 |---------|--------|
+| Production observability (zerolog + Prometheus + Grafana + Loki) | DONE |
+| Docker Compose monitoring stack (6 services) | DONE |
+| Grafana dashboards (API Overview + Security) | DONE |
+| Grafana alert rules (6 automated alerts) | DONE |
 | Hash-chained audit logs (Layer 6) | DONE |
 | HMAC-SHA256 request signing (Layer 7) | DONE |
 | Offline sync endpoints (bundle + sync-scans) | DONE |
@@ -169,7 +174,8 @@ All 7 security layers from the proposal are implemented:
 | Offline 48hr capability | PARTIAL | iOS fully done. Android scanner pending |
 | Oracle HRMS integration | NOT STARTED | Blocked on Oracle credentials |
 | Push notifications | NOT STARTED | Firebase + APNs needed |
-| On-premise Oman deployment | NOT STARTED | Blocked on infrastructure |
+| Production observability stack | DONE | zerolog, Prometheus, Grafana, Loki |
+| On-premise Oman deployment | IN PROGRESS | Docker Compose stack ready, blocked on DC access |
 
 ---
 
@@ -218,8 +224,10 @@ No critical bugs. All known issues are minor:
 - Rate limiting (Go Fiber middleware)
 - Android biometric auth
 - Arabic/RTL for remaining apps
+- Dependency vulnerability remediation (automated via Dependabot)
 
 ### Phase 4 — Integration & Deployment
 - Oracle HRMS integration (blocked on credentials)
-- On-premise Oman data center migration (blocked on infrastructure)
+- On-premise Oman data center migration (Docker Compose stack ready)
 - Load testing and penetration testing
+- Production Grafana alert tuning and notification channels (Slack/email)

@@ -9,7 +9,7 @@ graph TD
     CA[📱 Contractor App<br/>iOS / Android] -->|HTTPS REST API| BE
     SA[📷 Scanner App<br/>iOS / Android] -->|HTTPS REST API| BE
 
-    BE[⚙️ Go Backend - Gin]
+    BE[⚙️ Go Backend - Fiber]
 
     subgraph Backend Services
         direction LR
@@ -19,24 +19,42 @@ graph TD
 
     BE --> Backend Services
     BE -->|SQL| DB[(🐘 PostgreSQL<br/>Railway)]
+    BE -->|Nonce/Cache| RD[(Redis)]
     DB --- AP[🖥️ Admin Portal<br/>Next.js 16]
+
+    subgraph Observability
+        direction LR
+        PROM[Prometheus] --- GRAF[Grafana]
+        LOKI[Loki] --- GRAF
+    end
+
+    BE -->|/metrics| PROM
+    BE -->|JSON logs| LOKI
 
     style CA fill:#06b6d4,color:#fff
     style SA fill:#06b6d4,color:#fff
     style BE fill:#f59e0b,color:#fff
     style DB fill:#3b82f6,color:#fff
+    style RD fill:#dc2626,color:#fff
     style AP fill:#10b981,color:#fff
+    style PROM fill:#e6522c,color:#fff
+    style GRAF fill:#f46800,color:#fff
+    style LOKI fill:#2c3e50,color:#fff
 ```
 
 ## Technology Stack
 
 ### Backend
-- **Language**: Go 1.21+
-- **Framework**: Gin HTTP router
-- **Database**: PostgreSQL 15+ (hosted on Railway)
+- **Language**: Go 1.24+
+- **Framework**: Fiber v2 (high-performance HTTP framework)
+- **Database**: PostgreSQL 16+ (hosted on Railway)
+- **Cache**: Redis 7 (nonce anti-replay, session cache)
 - **Auth**: JWT tokens with `golang-jwt/jwt/v5`
 - **TOTP**: `pquerna/otp` library (RFC 6238 compliant)
 - **Hashing**: bcrypt for passwords
+- **Logging**: zerolog (structured JSON to stdout + Loki)
+- **Metrics**: Prometheus client (`client_golang`)
+- **Monitoring**: Grafana dashboards + alerting
 
 ### Mobile Apps
 | Feature | Android | iOS |
