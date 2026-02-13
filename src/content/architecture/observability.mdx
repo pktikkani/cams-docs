@@ -155,7 +155,7 @@ The histogram automatically creates buckets: 5ms, 10ms, 25ms, 50ms, 100ms, 250ms
 
 **What to look for:**
 - Login queries include bcrypt comparison which is intentionally slow (~60-100ms). This is normal.
-- QR contractor lookups should be fast (<10ms) since they're UUID primary key lookups.
+- QR contractor lookups should be fast (&lt;10ms) since they're UUID primary key lookups.
 - If query times start climbing, check PostgreSQL: connection pool exhaustion, missing indexes, or high load.
 
 ---
@@ -224,7 +224,7 @@ histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by 
 
 **How to read it:**
 - `contractor_login_lookup` and `guard_login_lookup` include bcrypt, so 50-100ms is expected.
-- `qr_contractor_lookup` is a simple UUID lookup, should be <10ms.
+- `qr_contractor_lookup` is a simple UUID lookup, should be &lt;10ms.
 - If any query latency starts climbing over time, the database may need attention (vacuuming, index rebuilding, connection pool limits).
 
 **PromQL:** `histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket[5m])) by (le, query))`
