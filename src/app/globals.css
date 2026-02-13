@@ -1,0 +1,30 @@
+/* Mermaid dark mode: ensure all text is readable */
+html.dark .mermaid text,
+html.dark .mermaid .nodeLabel,
+html.dark .mermaid .edgeLabel,
+html.dark .mermaid .label,
+html.dark .mermaid span {
+  color: #e5e7eb !important;
+  fill: #e5e7eb !important;
+}
+
+html.dark .mermaid .edgeLabel {
+  background-color: #1f2937 !important;
+}
+
+html.dark .mermaid .cluster rect {
+  fill: #374151 !important;
+  stroke: #6b7280 !important;
+}
+
+html.dark .mermaid .cluster text,
+html.dark .mermaid .cluster span {
+  color: #f3f4f6 !important;
+  fill: #f3f4f6 !important;
+}
+
+/* ER diagram text */
+html.dark .mermaid .entityLabel,
+html.dark .mermaid .relationshipLabel {
+  fill: #e5e7eb !important;
+}
