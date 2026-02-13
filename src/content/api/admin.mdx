@@ -1,0 +1,412 @@
+# Admin Endpoints
+
+All admin endpoints require a JWT token from `/api/v1/admin/login`. Write operations (POST, PUT, DELETE) additionally require `super_admin` or `site_admin` role — enforced by the `AdminWriteMiddleware`.
+
+Admin endpoints do **not** require HMAC signing (unlike mobile endpoints).
+
+## Admin Login
+
+```
+POST /api/v1/admin/login
+```
+
+### Request Body
+
+```json
+{
+  "email": "admin@cams.com",
+  "password": "password123"
+}
+```
+
+### Success Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "id": "uuid",
+      "email": "admin@cams.com",
+      "name": "Super Admin",
+      "role": "super_admin"
+    }
+  }
+}
+```
+
+### Roles
+
+| Role | Read | Write | Manage Users |
+|------|------|-------|--------------|
+| `super_admin` | Yes | Yes | Yes |
+| `site_admin` | Yes | Yes | No |
+| `viewer` | Yes | No | No |
+| `auditor` | Yes (logs only) | No | No |
+
+---
+
+## Current User
+
+```
+GET /api/v1/admin/me
+```
+
+Returns the authenticated admin's profile.
+
+---
+
+## Dashboard
+
+### Get Stats
+
+```
+GET /api/v1/admin/dashboard/stats
+```
+
+Returns aggregate counts: total contractors, active contractors, total sites, scans today, scans this week, grant/deny ratio.
+
+### Recent Scans
+
+```
+GET /api/v1/admin/dashboard/recent-scans
+```
+
+Returns the latest 20 scan log entries with contractor name, site, result, and timestamp.
+
+### Scan Trends
+
+```
+GET /api/v1/admin/dashboard/scan-trends
+```
+
+Returns daily scan counts for the last 30 days (for chart rendering).
+
+### Site Map Data
+
+```
+GET /api/v1/admin/dashboard/site-map
+```
+
+Returns all sites with coordinates and scan counts (for Leaflet map).
+
+### Expiring Schedules
+
+```
+GET /api/v1/admin/dashboard/expiring-schedules
+```
+
+Returns schedules expiring within the next 7 days.
+
+---
+
+## Contractors CRUD
+
+### List Contractors
+
+```
+GET /api/v1/admin/contractors
+```
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | int | Page number (default 1) |
+| `limit` | int | Items per page (default 20) |
+| `search` | string | Search by name, email, or company |
+| `status` | string | Filter: `active`, `inactive`, or `all` |
+
+### Get Contractor
+
+```
+GET /api/v1/admin/contractors/:id
+```
+
+### Create Contractor
+
+```
+POST /api/v1/admin/contractors
+```
+
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john@company.com",
+  "company": "Acme Corp",
+  "trade": "Electrician",
+  "id_number": "ID-12345",
+  "phone": "+966501234567",
+  "password": "password123"
+}
+```
+
+### Update Contractor
+
+```
+PUT /api/v1/admin/contractors/:id
+```
+
+Same body as create (partial updates supported).
+
+### Toggle Status
+
+```
+PUT /api/v1/admin/contractors/:id/status
+```
+
+Toggles `is_active` between true/false.
+
+### Photo Management
+
+```
+POST /api/v1/admin/contractors/:id/photo
+```
+Upload: `Content-Type: multipart/form-data` with `photo` field (JPEG, max 5MB).
+
+```
+DELETE /api/v1/admin/contractors/:id/photo
+```
+Removes the contractor's photo.
+
+### Reset All Devices
+
+```
+POST /api/v1/admin/contractors/:id/reset-all-devices
+```
+
+Deactivates all registered devices for a contractor (forces re-registration).
+
+### Bulk Import
+
+```
+POST /api/v1/admin/contractors/bulk-import
+```
+
+Upload: `Content-Type: multipart/form-data` with `file` field (CSV or Excel). Expected columns: `first_name`, `last_name`, `email`, `company`, `trade`, `id_number`, `phone`.
+
+### Export
+
+```
+GET /api/v1/admin/contractors/export
+```
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `format` | string | `csv` or `xlsx` (default `csv`) |
+
+---
+
+## Devices
+
+### Reset Device
+
+```
+POST /api/v1/admin/devices/:id/reset
+```
+
+Deactivates a specific device registration.
+
+---
+
+## Sites CRUD
+
+### List Sites
+
+```
+GET /api/v1/admin/sites
+```
+
+### Get Site
+
+```
+GET /api/v1/admin/sites/:id
+```
+
+### Create Site
+
+```
+POST /api/v1/admin/sites
+```
+
+```json
+{
+  "site_name": "NAMA Headquarters",
+  "site_code": "NAMA-HQ-001",
+  "address": "King Fahd Road, Riyadh",
+  "latitude": 24.7136,
+  "longitude": 46.6753,
+  "geofence_radius": 200
+}
+```
+
+### Update Site
+
+```
+PUT /api/v1/admin/sites/:id
+```
+
+### Toggle Site Status
+
+```
+PUT /api/v1/admin/sites/:id/status
+```
+
+---
+
+## Schedules CRUD
+
+### List Schedules
+
+```
+GET /api/v1/admin/schedules
+```
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | int | Page number |
+| `limit` | int | Items per page |
+| `contractor_id` | uuid | Filter by contractor |
+| `site_id` | uuid | Filter by site |
+
+### Create Schedule
+
+```
+POST /api/v1/admin/schedules
+```
+
+```json
+{
+  "contractor_id": "uuid",
+  "site_id": "uuid",
+  "start_date": "2026-01-01",
+  "end_date": "2026-12-31",
+  "allowed_days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+  "start_time": "07:00",
+  "end_time": "17:00"
+}
+```
+
+### Bulk Create
+
+```
+POST /api/v1/admin/schedules/bulk
+```
+
+```json
+{
+  "schedules": [
+    { "contractor_id": "uuid", "site_id": "uuid", "start_date": "...", "end_date": "...", "allowed_days": [...], "start_time": "07:00", "end_time": "17:00" }
+  ]
+}
+```
+
+### Toggle Status
+
+```
+PUT /api/v1/admin/schedules/:id/status
+```
+
+### Delete Schedule
+
+```
+DELETE /api/v1/admin/schedules/:id
+```
+
+### Export
+
+```
+GET /api/v1/admin/schedules/export
+```
+
+---
+
+## Scanner Devices
+
+### List Scanners
+
+```
+GET /api/v1/admin/scanners
+```
+
+### Assign Scanner to Site
+
+```
+PUT /api/v1/admin/scanners/:id/assign-site
+```
+
+```json
+{
+  "site_id": "uuid"
+}
+```
+
+### Toggle Scanner Status
+
+```
+PUT /api/v1/admin/scanners/:id/status
+```
+
+---
+
+## Scan Logs & Audit
+
+### List Logs
+
+```
+GET /api/v1/admin/logs
+```
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | int | Page number |
+| `limit` | int | Items per page |
+| `site_id` | uuid | Filter by site |
+| `contractor_id` | uuid | Filter by contractor |
+| `result` | string | Filter: `granted` or `denied` |
+| `from` | date | Start date |
+| `to` | date | End date |
+
+### Export Logs
+
+```
+GET /api/v1/admin/logs/export
+```
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `format` | string | `csv`, `xlsx`, or `pdf` |
+
+Plus same filter params as list.
+
+### Report Summary
+
+```
+GET /api/v1/admin/logs/report
+```
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `from` | date | Report start date |
+| `to` | date | Report end date |
+
+Returns aggregated stats: total scans, grants, denials, busiest site, busiest day, breakdown by site and by day.
+
+### Verify Hash Chain
+
+```
+GET /api/v1/admin/logs/verify-chain
+```
+
+Verifies the SHA-256 hash chain integrity of all scan logs. Returns the number of verified entries and any broken chain links.
+
+```json
+{
+  "status": "success",
+  "data": {
+    "total_logs": 1542,
+    "verified": 1542,
+    "chain_valid": true
+  }
+}
+```

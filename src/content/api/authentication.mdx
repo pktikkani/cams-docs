@@ -81,35 +81,49 @@ POST /api/v1/scanner/login
 }
 ```
 
-## Device Registration
+## Admin Login
 
 ```
-POST /api/v1/devices/register
-```
-
-### Headers
-```
-Authorization: Bearer <contractor-token>
+POST /api/v1/admin/login
 ```
 
 ### Request Body
 
 ```json
 {
-  "device_fingerprint": "a1b2c3d4e5f6",
-  "device_name": "Samsung Galaxy S24",
-  "platform": "android"
+  "email": "admin@cams.com",
+  "password": "password123"
 }
 ```
 
-### Response (200)
+### Success Response (200)
 
 ```json
 {
   "status": "success",
   "data": {
-    "device_id": "uuid",
-    "is_active": true
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "id": "uuid",
+      "email": "admin@cams.com",
+      "name": "Super Admin",
+      "role": "super_admin"
+    }
   }
 }
 ```
+
+See [Admin Endpoints](/docs/api/admin) for the full admin API.
+
+## HMAC Request Signing
+
+Contractor and scanner endpoints require HMAC-SHA256 request signing in addition to JWT. Two headers must be present:
+
+| Header | Description |
+|--------|-------------|
+| `X-Timestamp` | Unix timestamp (seconds). Must be within 90 seconds of server time. |
+| `X-Signature` | HMAC-SHA256 of `timestamp.body` using the shared secret. |
+
+Requests missing or failing HMAC verification return `401 Unauthorized`.
+
+Admin endpoints do **not** require HMAC — only JWT authentication.

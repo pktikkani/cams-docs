@@ -10,11 +10,15 @@ https://contractor-api.nubewired.com
 
 ## Authentication
 
-All authenticated endpoints require a JWT token in the `Authorization` header:
+Most endpoints require a JWT token in the `Authorization` header:
 
 ```
 Authorization: Bearer <jwt-token>
 ```
+
+**Mobile endpoints** (contractor + scanner) also require HMAC-SHA256 request signing via `X-Signature` and `X-Timestamp` headers. See [Security — HMAC Signing](/docs/architecture/security#hmac-sha256-request-signing) for details.
+
+**Admin endpoints** require only JWT (no HMAC). Write operations additionally require `super_admin` or `site_admin` role.
 
 ## API Versioning
 
@@ -40,34 +44,119 @@ Error responses:
 }
 ```
 
-## Public Endpoints
+## Public Endpoints (no auth required)
 
 | Method | Path | Description |
 |--------|------|-------------|
+| `GET` | `/` | API info (version, status) |
 | `GET` | `/health` | Health check |
 | `GET` | `/metrics` | Prometheus metrics (scraped by monitoring stack) |
 | `GET` | `/api/docs` | Swagger UI |
 | `GET` | `/api/docs/openapi.json` | OpenAPI spec (JSON) |
-
-## Endpoint Summary
-
-### Contractor Endpoints
-| Method | Path | Description |
-|--------|------|-------------|
 | `POST` | `/api/v1/auth/login` | Contractor login |
-| `GET` | `/api/v1/contractor/profile` | Get contractor profile |
-| `GET` | `/api/v1/access/schedule` | Get access schedules |
-| `POST` | `/api/v1/contractor/photo` | Upload contractor photo |
-| `POST` | `/api/v1/devices/register` | Register contractor device |
+| `POST` | `/api/v1/scanner/login` | Guard/scanner login |
+| `POST` | `/api/v1/admin/login` | Admin portal login |
 
-### Scanner Endpoints
+## Contractor Endpoints (HMAC + JWT)
+
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/v1/scanner/login` | Guard login |
+| `GET` | `/api/v1/contractor/profile` | Get contractor profile |
+| `POST` | `/api/v1/contractor/photo` | Upload contractor photo |
+| `GET` | `/api/v1/access/schedule` | Get access schedules |
+
+## Scanner Endpoints (HMAC + Scanner JWT)
+
+| Method | Path | Description |
+|--------|------|-------------|
 | `GET` | `/api/v1/scanner/sites` | List available sites |
 | `POST` | `/api/v1/scanner/assign-site` | Assign guard to site |
-| `GET` | `/api/v1/scanner/assigned-site` | Get current assignment |
+| `GET` | `/api/v1/scanner/assigned-site` | Get current site assignment |
 | `POST` | `/api/v1/scanner/validate` | Validate QR code |
+| `GET` | `/api/v1/scanner/offline-bundle` | Download offline validation bundle |
+| `POST` | `/api/v1/scanner/sync-scans` | Sync offline scans to server |
 
-### Admin Endpoints (tRPC)
-The admin portal uses **tRPC** procedures instead of REST. See the [Admin Portal](/docs/admin-portal/trpc) section for details.
+## Admin Endpoints (Admin JWT)
+
+All admin endpoints are under `/api/v1/admin/`. Write operations (POST, PUT, DELETE) require `super_admin` or `site_admin` role.
+
+### Auth & Users
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/me` | Get current admin profile |
+| `GET` | `/api/v1/admin/users` | List admin users |
+| `POST` | `/api/v1/admin/users` | Create admin user |
+
+### Dashboard
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/dashboard/stats` | Dashboard statistics |
+| `GET` | `/api/v1/admin/dashboard/recent-scans` | Recent scan activity |
+| `GET` | `/api/v1/admin/dashboard/scan-trends` | Scan trend data (charts) |
+| `GET` | `/api/v1/admin/dashboard/site-map` | Site map data (coordinates) |
+| `GET` | `/api/v1/admin/dashboard/expiring-schedules` | Schedules expiring soon |
+
+### Contractors
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/contractors` | List contractors (paginated, searchable) |
+| `GET` | `/api/v1/admin/contractors/export` | Export contractors (CSV/Excel) |
+| `GET` | `/api/v1/admin/contractors/:id` | Get contractor by ID |
+| `POST` | `/api/v1/admin/contractors` | Create contractor |
+| `PUT` | `/api/v1/admin/contractors/:id` | Update contractor |
+| `PUT` | `/api/v1/admin/contractors/:id/status` | Toggle contractor active/inactive |
+| `POST` | `/api/v1/admin/contractors/:id/photo` | Upload contractor photo |
+| `DELETE` | `/api/v1/admin/contractors/:id/photo` | Delete contractor photo |
+| `POST` | `/api/v1/admin/contractors/:id/reset-all-devices` | Reset all registered devices |
+| `POST` | `/api/v1/admin/contractors/bulk-import` | Bulk import from CSV/Excel |
+
+### Devices
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/admin/devices/:id/reset` | Reset a specific device |
+
+### Sites
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/sites` | List all sites |
+| `GET` | `/api/v1/admin/sites/:id` | Get site by ID |
+| `POST` | `/api/v1/admin/sites` | Create site |
+| `PUT` | `/api/v1/admin/sites/:id` | Update site |
+| `PUT` | `/api/v1/admin/sites/:id/status` | Toggle site active/inactive |
+
+### Schedules
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/schedules` | List schedules (paginated) |
+| `GET` | `/api/v1/admin/schedules/export` | Export schedules |
+| `POST` | `/api/v1/admin/schedules` | Create schedule |
+| `POST` | `/api/v1/admin/schedules/bulk` | Bulk create schedules |
+| `PUT` | `/api/v1/admin/schedules/:id/status` | Toggle schedule active/inactive |
+| `DELETE` | `/api/v1/admin/schedules/:id` | Delete schedule |
+
+### Scanner Devices
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/scanners` | List scanner devices |
+| `PUT` | `/api/v1/admin/scanners/:id/assign-site` | Assign scanner to site |
+| `PUT` | `/api/v1/admin/scanners/:id/status` | Toggle scanner active/inactive |
+
+### Scan Logs & Audit
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/admin/logs` | List scan logs (filtered, paginated) |
+| `GET` | `/api/v1/admin/logs/export` | Export logs (CSV/Excel/PDF) |
+| `GET` | `/api/v1/admin/logs/report` | Generate summary report |
+| `GET` | `/api/v1/admin/logs/verify-chain` | Verify hash chain integrity |
+
+---
+
+**Total: 49 endpoints** (4 public + 3 contractor + 6 scanner + 36 admin)

@@ -136,3 +136,98 @@ Authorization: Bearer <guard-token>
   }
 }
 ```
+
+## Get Offline Bundle
+
+Downloads a pre-built bundle containing contractor data, TOTP seeds, and site schedules for offline QR validation. Used by the scanner app before going offline.
+
+```
+GET /api/v1/scanner/offline-bundle
+```
+
+### Headers
+```
+Authorization: Bearer <guard-token>
+```
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "bundle_version": "2026-02-13T10:00:00Z",
+    "contractors": [
+      {
+        "id": "uuid",
+        "full_name": "John Doe",
+        "company": "Acme Corp",
+        "totp_seed": "JBSWY3DPEHPK3PXP",
+        "photo_url": "https://...",
+        "is_active": true
+      }
+    ],
+    "schedules": [
+      {
+        "contractor_id": "uuid",
+        "site_id": "uuid",
+        "start_date": "2026-01-01",
+        "end_date": "2026-12-31",
+        "allowed_days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+        "start_time": "07:00",
+        "end_time": "17:00"
+      }
+    ],
+    "site": {
+      "id": "uuid",
+      "site_code": "NAMA-HQ-001",
+      "site_name": "NAMA Headquarters",
+      "geofence_radius": 200
+    }
+  }
+}
+```
+
+The bundle is scoped to the guard's currently assigned site. The iOS scanner app encrypts this bundle with AES-GCM before storing locally.
+
+## Sync Offline Scans
+
+Uploads scan logs that were recorded while the scanner was offline. The server deduplicates by nonce.
+
+```
+POST /api/v1/scanner/sync-scans
+```
+
+### Headers
+```
+Authorization: Bearer <guard-token>
+```
+
+### Request Body
+
+```json
+{
+  "scans": [
+    {
+      "contractor_id": "uuid",
+      "site_id": "uuid",
+      "scan_mode": "entry",
+      "scan_result": "granted",
+      "scanned_at": "2026-02-13T08:15:00Z",
+      "nonce": "abc123def456"
+    }
+  ]
+}
+```
+
+### Response (200)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "synced": 5,
+    "duplicates": 1
+  }
+}
+```

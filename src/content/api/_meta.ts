@@ -4,4 +4,5 @@ export default {
   'contractors': 'Contractors',
   'scanning': 'Scanning & Validation',
   'sites': 'Sites & Schedules',
+  'admin': 'Admin Endpoints',
 }
