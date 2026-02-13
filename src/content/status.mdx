@@ -1,0 +1,225 @@
+# Feature Status
+
+**Last Updated:** February 13, 2026
+
+Implementation status of all features specified in the NAMA-CAMS technical proposal.
+
+## Component Overview
+
+| Component | Tech Stack | Status |
+|-----------|------------|--------|
+| Contractor App (iOS) | SwiftUI, CryptoKit | Core complete |
+| Contractor App (Android) | Jetpack Compose | Core complete |
+| Scanner App (iOS) | SwiftUI, AVFoundation | **Fully complete** |
+| Scanner App (Android) | Jetpack Compose, ML Kit | Core complete |
+| Admin Portal | Next.js 16, tRPC, shadcn/ui | **Fully complete** |
+| Backend API | Go/Fiber, PostgreSQL, Redis | Core + Admin CRUD complete |
+
+---
+
+## Security Layers
+
+All 7 security layers from the proposal are implemented:
+
+| Layer | Description | Backend | iOS | Android |
+|-------|-------------|---------|-----|---------|
+| 1 | TOTP tokens (30s rotating codes) | DONE | DONE | DONE |
+| 2 | Device fingerprinting (SHA-256) | DONE | DONE | DONE |
+| 3 | Replay prevention (nonce + Redis TTL) | DONE | DONE | DONE |
+| 4 | GPS geofence verification | DONE | DONE | DONE |
+| 5 | Access schedule validation (date/day/time) | DONE | DONE | DONE |
+| 6 | Hash-chained audit logs (SHA-256 chain) | DONE | N/A | N/A |
+| 7 | HMAC-SHA256 request signing | DONE | DONE | **PENDING** |
+
+---
+
+## Contractor Mobile App
+
+| Feature | RFP Requirement | iOS | Android |
+|---------|----------------|-----|---------|
+| Email/password login | Yes | DONE | DONE |
+| JWT token authentication | Yes | DONE | DONE |
+| Biometric login (Face ID / Fingerprint) | Yes | DONE | **PENDING** |
+| Device fingerprint registration | Yes | DONE | DONE |
+| Account deactivation detection | Yes | DONE | DONE |
+| Auto-logout on token expiry | Yes | DONE | DONE |
+| Dynamic QR code generation | Yes | DONE | DONE |
+| 30-second TOTP token rotation | Yes | DONE | DONE |
+| Real-time countdown timer | Yes | DONE | DONE |
+| HMAC-SHA256 request signing | Yes | DONE | **PENDING** |
+| Nonce for replay prevention | Yes | DONE | DONE |
+| Device fingerprint in QR payload | Yes | DONE | DONE |
+| Multi-site support | Yes | DONE | DONE |
+| Screenshot prevention | Yes | DONE | DONE |
+| Screen recording detection | Yes | DONE | DONE |
+| Jailbreak/root detection | Yes | DONE | DONE |
+| Keychain/encrypted storage | Yes | DONE | DONE |
+| GPS geofencing | Yes | DONE | DONE |
+| QR blocking outside geofence | Yes | DONE | DONE |
+| Profile display + photo upload | Yes | DONE | DONE |
+| Access schedule viewer | Yes | DONE | DONE |
+| Offline mode (48hr cache) | Yes | DONE | DONE |
+| Push notifications | Yes | **PENDING** | **PENDING** |
+| Arabic/RTL support | Yes | **PENDING** | **PENDING** |
+| Phone number + OTP verification | Yes | **PENDING** | **PENDING** |
+| Oracle contractor ID linking | Yes | **PENDING** | **PENDING** |
+
+---
+
+## Scanner/Guard App
+
+| Feature | RFP Requirement | iOS | Android |
+|---------|----------------|-----|---------|
+| Guard login (JWT auth) | Yes | DONE | DONE |
+| QR code scanning + validation | Yes | DONE | DONE |
+| Site assignment | Yes | DONE | DONE |
+| Access granted/denied display | Yes | DONE | DONE |
+| Contractor photo verification | Yes | DONE | DONE |
+| Entry/exit mode toggle | Yes | DONE | DONE |
+| Scan history log | Yes | DONE | DONE |
+| Emergency override | Yes | DONE | DONE |
+| Haptic feedback | Yes | DONE | DONE |
+| Guard profile + logout | Yes | DONE | **PENDING** |
+| HMAC-SHA256 request signing | Yes | DONE | **PENDING** |
+| Offline TOTP validation | Yes | DONE | **PENDING** |
+| Offline bundle pre-download | Yes | DONE | **PENDING** |
+| Encrypted offline storage (AES-GCM) | Yes | DONE | **PENDING** |
+| Push notifications | Yes | **PENDING** | **PENDING** |
+| Arabic/RTL support | Yes | **PENDING** | **PENDING** |
+
+---
+
+## Admin Portal (100% Complete)
+
+| Feature | RFP Requirement | Status |
+|---------|----------------|--------|
+| Real-time dashboard with charts | Yes | DONE |
+| Live site map (Leaflet + OpenStreetMap) | Yes | DONE |
+| Contractor CRUD + search + pagination | Yes | DONE |
+| Contractor photo management | Yes | DONE |
+| Device reset/management | Yes | DONE |
+| Site CRUD with geofencing | Yes | DONE |
+| Schedule CRUD with time/day rules | Yes | DONE |
+| Scanner device management | Yes | DONE |
+| Scan log viewer with filters | Yes | DONE |
+| Scan log export (CSV, Excel, PDF) | Yes | DONE |
+| Report generation (date range, summary) | Yes | DONE |
+| Hash chain integrity verification | Yes | DONE |
+| Bulk contractor import (CSV/Excel) | Yes | DONE |
+| Bulk schedule import | Yes | DONE |
+| Data export (contractors, schedules, logs) | Yes | DONE |
+| Role-based access (super_admin, site_admin, viewer, auditor) | Yes | DONE |
+| Bilingual EN/AR with RTL layout | Yes | DONE |
+| Admin user management | Yes | DONE |
+
+---
+
+## Backend API
+
+### Implemented (48 endpoints)
+
+| Category | Count | Status |
+|----------|-------|--------|
+| Health + public | 2 | DONE |
+| Contractor auth + profile | 4 | DONE |
+| QR validation | 2 | DONE |
+| Scanner auth + management | 6 | DONE |
+| Admin auth | 4 | DONE |
+| Admin dashboard | 5 | DONE |
+| Admin contractors | 10 | DONE |
+| Admin devices | 1 | DONE |
+| Admin sites | 5 | DONE |
+| Admin schedules | 6 | DONE |
+| Admin scanners | 3 | DONE |
+| Admin logs | 4 | DONE |
+
+### Pending Backend Features
+
+| Feature | Priority | Status |
+|---------|----------|--------|
+| Push notification service (APNs + Firebase) | MEDIUM | **PENDING** |
+| Rate limiting / DDoS protection | MEDIUM | **PENDING** |
+| Oracle HRMS integration | HIGH | **BLOCKED** (credentials) |
+| RabbitMQ event bus | LOW | **PENDING** |
+
+### Completed Backend Features (previously pending)
+
+| Feature | Status |
+|---------|--------|
+| Hash-chained audit logs (Layer 6) | DONE |
+| HMAC-SHA256 request signing (Layer 7) | DONE |
+| Offline sync endpoints (bundle + sync-scans) | DONE |
+| Swagger/OpenAPI documentation | DONE |
+
+---
+
+## RFP Compliance Summary
+
+| Proposal Requirement | Status | Notes |
+|---------------------|--------|-------|
+| 4 application components | DONE | Contractor app, scanner app, admin portal, backend |
+| iOS + Android mobile apps | DONE | Both platforms for both apps |
+| QR-based access control | DONE | TOTP + 7 security layers |
+| Role-based admin portal | DONE | 4 roles with permission matrix |
+| Real-time dashboard | DONE | Stats, charts, live site map |
+| Bilingual EN/AR | PARTIAL | Admin portal done. Mobile apps pending |
+| Reporting + export | DONE | CSV, Excel, PDF |
+| Bulk data operations | DONE | Import/export contractors + schedules |
+| 7 security layers | DONE | All 7 on backend + iOS. Android Layer 7 pending |
+| Offline 48hr capability | PARTIAL | iOS fully done. Android scanner pending |
+| Oracle HRMS integration | NOT STARTED | Blocked on Oracle credentials |
+| Push notifications | NOT STARTED | Firebase + APNs needed |
+| On-premise Oman deployment | NOT STARTED | Blocked on infrastructure |
+
+---
+
+## Known Bugs
+
+No critical bugs. All known issues are minor:
+
+| Bug | Severity | Component | Notes |
+|-----|----------|-----------|-------|
+| QR code distortion on site switch | Low | iOS Contractor | Intermittent rendering artifact during site change. Under investigation |
+
+---
+
+## Pending Items Summary
+
+| # | Item | Blocked? | Priority |
+|---|------|----------|----------|
+| 1 | Android scanner offline mode (TOTP + bundle + encrypted DB) | No | HIGH |
+| 2 | Android scanner guard profile + logout | No | MEDIUM |
+| 3 | Android HMAC signing (both apps) | No | MEDIUM |
+| 4 | Push notifications (backend + iOS + Android) | No | MEDIUM |
+| 5 | Rate limiting (Go middleware) | No | MEDIUM |
+| 6 | Android biometric auth (contractor app) | No | LOW |
+| 7 | Arabic/RTL (iOS contractor + both Android apps) | No | LOW |
+| 8 | Oracle HRMS integration | YES (credentials) | HIGH |
+| 9 | On-premise Oman deployment | YES (infrastructure) | HIGH |
+| 10 | Load testing (2,000+ concurrent users) | No | MEDIUM |
+| 11 | Penetration testing | YES (external) | MEDIUM |
+| 12 | RabbitMQ event bus | No | LOW |
+
+---
+
+## Roadmap
+
+### Phase 1 — Android Parity
+- Android scanner offline mode (TOTP validation, bundle pre-download, encrypted DB)
+- Android scanner guard profile + logout
+- Android HMAC signing (both apps)
+
+### Phase 2 — Push Notifications
+- Go backend push service (APNs + Firebase)
+- iOS push notification integration
+- Android push notification integration (FCM)
+
+### Phase 3 — Hardening
+- Rate limiting (Go Fiber middleware)
+- Android biometric auth
+- Arabic/RTL for remaining apps
+
+### Phase 4 — Integration & Deployment
+- Oracle HRMS integration (blocked on credentials)
+- On-premise Oman data center migration (blocked on infrastructure)
+- Load testing and penetration testing
