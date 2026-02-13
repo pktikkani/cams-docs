@@ -6,23 +6,23 @@ CAMS follows a client-server architecture with multiple mobile clients connectin
 
 ```mermaid
 graph TD
-    CA[📱 Contractor App<br/>iOS / Android] -->|HTTPS REST API| BE
-    SA[📷 Scanner App<br/>iOS / Android] -->|HTTPS REST API| BE
+    CA["📱 Contractor App — iOS / Android"] -->|HTTPS REST API| BE
+    SA["📷 Scanner App — iOS / Android"] -->|HTTPS REST API| BE
 
-    BE[⚙️ Go Backend - Fiber]
+    BE["⚙️ Go Backend - Fiber"]
 
-    subgraph Backend Services
+    subgraph Backend_Services["Backend Services"]
         direction LR
         AUTH[Auth] --- VALIDATE[Validate] --- DEVICES[Devices]
         TOTP[TOTP] --- GEOFENCE[Geofence] --- LOGGING[Logging]
     end
 
-    BE --> Backend Services
-    BE -->|SQL| DB[(🐘 PostgreSQL<br/>Railway)]
+    BE --> Backend_Services
+    BE -->|SQL| DB[("🐘 PostgreSQL — Railway")]
     BE -->|Nonce/Cache| RD[(Redis)]
-    DB --- AP[🖥️ Admin Portal<br/>Next.js 16]
+    AP["🖥️ Admin Portal — Next.js 16"] -->|SQL| DB
 
-    subgraph Observability
+    subgraph Observability_Stack["Observability"]
         direction LR
         PROM[Prometheus] --- GRAF[Grafana]
         LOKI[Loki] --- GRAF

@@ -113,20 +113,20 @@ graph TB
         WEB[🌐 Browser]
     end
 
-    subgraph "Application Layer"
-        AP[🖥️ Admin Portal<br/>Vercel / Railway]
-        BE[⚙️ Go Backend<br/>Railway / Docker]
+    subgraph Application_Layer["Application Layer"]
+        AP["🖥️ Admin Portal — Vercel / Railway"]
+        BE["⚙️ Go Backend — Railway / Docker"]
     end
 
-    subgraph "Data Layer"
-        DB[(🐘 PostgreSQL 16)]
+    subgraph Data_Layer["Data Layer"]
+        DB[("🐘 PostgreSQL 16")]
         RD[(Redis 7)]
     end
 
-    subgraph "Observability Stack"
-        PROM[Prometheus<br/>:9090]
-        LOKI[Loki<br/>:3100]
-        GRAF[Grafana<br/>:3000]
+    subgraph Observability_Stack["Observability Stack"]
+        PROM["Prometheus :9090"]
+        LOKI["Loki :3100"]
+        GRAF["Grafana :3000"]
     end
 
     WEB -->|HTTPS| AP

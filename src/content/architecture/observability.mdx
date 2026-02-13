@@ -6,9 +6,9 @@ CAMS uses a self-hosted observability stack for production monitoring: **zerolog
 
 ```mermaid
 graph LR
-    API[Go API<br/>:8080] -->|/metrics endpoint| PROM[Prometheus<br/>:9090]
-    API -->|HTTP push<br/>JSON logs| LOKI[Loki<br/>:3100]
-    PROM -->|datasource| GRAF[Grafana<br/>:3000]
+    API["Go API :8080"] -->|/metrics endpoint| PROM["Prometheus :9090"]
+    API -->|HTTP push JSON logs| LOKI["Loki :3100"]
+    PROM -->|datasource| GRAF["Grafana :3000"]
     LOKI -->|datasource| GRAF
 
     style API fill:#f59e0b,color:#fff
