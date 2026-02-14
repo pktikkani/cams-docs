@@ -54,10 +54,15 @@ The full stack runs via `docker compose up -d` with 6 services:
 ### Environment Variables (Docker)
 
 ```bash
-# API service
+# API service (required)
 JWT_SECRET=your-jwt-secret
-HMAC_SECRET=your-hmac-secret
-LOKI_URL=http://loki:3100    # Enables structured log push to Loki
+DATABASE_URL=postgresql://user:pass@postgres:5432/cams
+
+# API service (optional)
+HMAC_SECRET=your-hmac-secret        # Fallback shared key (migration only)
+LOKI_URL=http://loki:3100           # Enables structured log push to Loki
+CORS_ORIGINS=https://admin.example.com  # Comma-separated allowed origins
+METRICS_TOKEN=your-metrics-token    # Bearer token for /metrics endpoint (unset = open)
 
 # Grafana
 GF_SECURITY_ADMIN_USER=admin
@@ -72,11 +77,15 @@ docker compose up -d
 ```
 
 - API: `http://localhost:8080`
+- Health: `http://localhost:8080/health` (checks PostgreSQL + Redis connectivity)
+- Metrics: `http://localhost:8080/metrics` (protected by `METRICS_TOKEN` if set)
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000` (admin/admin)
 - Loki: `http://localhost:3100`
 
 Grafana is auto-provisioned with datasources (Prometheus + Loki), two dashboards (API Overview + Security), and 6 alert rules.
+
+The API supports **graceful shutdown** — on SIGTERM/SIGINT, it drains active connections (10s timeout) before closing database and Redis connections.
 
 ## Mobile Apps
 

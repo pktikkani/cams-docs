@@ -12,7 +12,7 @@ POST /api/v1/auth/login
 {
   "email": "john.doe@contractor.com",
   "password": "password123",
-  "device_fingerprint": "a1b2c3d4e5f6"
+  "device_fingerprint": "a9f9b6a24496889ba0b6aac5dd7092ff4a633fd142b6da0da494ecf8ae70185b"
 }
 ```
 
@@ -57,7 +57,7 @@ POST /api/v1/scanner/login
 {
   "email": "guard@security.com",
   "password": "guardpass123",
-  "device_fingerprint": "x9y8z7w6v5u4"
+  "device_fingerprint": "7617b0afd25ba04d6b3f2fdc19050ddd83889f243584367426e6df679d222784"
 }
 ```
 
@@ -121,9 +121,31 @@ Contractor and scanner endpoints require HMAC-SHA256 request signing in addition
 
 | Header | Description |
 |--------|-------------|
-| `X-Timestamp` | Unix timestamp (seconds). Must be within 90 seconds of server time. |
-| `X-Signature` | HMAC-SHA256 of `timestamp.body` using the shared secret. |
+| `X-Timestamp` | Unix timestamp (seconds). Must be within 5 minutes of server time. |
+| `X-Signature` | HMAC-SHA256 of `timestamp.body` using the per-device HMAC key. |
+
+Each device receives a unique 256-bit HMAC key on login (returned in the `hmac_key` field of the login response). The backend resolves the correct key from the JWT identity — there is no shared secret.
 
 Requests missing or failing HMAC verification return `401 Unauthorized`.
 
 Admin endpoints do **not** require HMAC — only JWT authentication.
+
+## Device Fingerprint Validation
+
+All login endpoints validate the `device_fingerprint` field:
+
+- Must be a valid **SHA-256 hex string** (exactly 64 hexadecimal characters)
+- Invalid format returns `400` with `invalid_device_fingerprint` error
+- Empty fingerprint returns `400` with `missing_fields` error
+
+## JWT Token Claims
+
+All JWT tokens include standardized claims for security:
+
+| Claim | Value | Purpose |
+|-------|-------|---------|
+| `iss` | `cams-api` | Issuer validation |
+| `sub` | User UUID | Subject identification |
+| `aud` | `contractor` / `scanner` / `admin` | Token type isolation |
+
+Using an admin JWT on a scanner endpoint (or vice versa) will be rejected with `401 Unauthorized`.

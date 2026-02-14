@@ -41,7 +41,7 @@ CAMS exposes 6 Prometheus metrics. Each metric is a time series — a stream of 
 | Label | Values | Meaning |
 |-------|--------|---------|
 | `method` | GET, POST, PUT, DELETE | HTTP method |
-| `path` | `/health`, `/api/v1/admin/login`, `/api/v1/contractors/:id`, etc. | The **route pattern** (not the actual URL with IDs — this prevents thousands of unique label combinations) |
+| `path` | `/health`, `/api/v1/admin/login`, `/api/v1/contractors/:id`, `unmatched`, etc. | The **route pattern** (not the actual URL with IDs). Unmatched routes (404s) are normalized to `"unmatched"` to prevent cardinality explosion. |
 | `status` | 200, 400, 401, 403, 404, 500 | HTTP response status code |
 
 **What to look for:**
@@ -506,7 +506,7 @@ All backend logging uses `github.com/rs/zerolog` with JSON output. Every log lin
 | stdout | Direct write | Container log output (Railway, Docker) |
 | Loki | HTTP push (async, best-effort) | Centralized log search in Grafana |
 
-The Loki writer is non-blocking — if Loki is unavailable, logs still go to stdout without impacting API latency.
+The Loki writer is non-blocking with a bounded channel (capacity 1,000) and single sender goroutine. Messages are dropped if the channel is full. If Loki is unavailable, logs still go to stdout without impacting API latency. The Loki HTTP client has a 5-second timeout to prevent connection hangs.
 
 ---
 

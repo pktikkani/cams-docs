@@ -1,6 +1,6 @@
 # Feature Status
 
-**Last Updated:** February 13, 2026
+**Last Updated:** February 14, 2026
 
 Implementation status of all features specified in the NAMA-CAMS technical proposal.
 
@@ -13,7 +13,7 @@ Implementation status of all features specified in the NAMA-CAMS technical propo
 | Scanner App (iOS) | SwiftUI, AVFoundation | **Fully complete** |
 | Scanner App (Android) | Jetpack Compose, ML Kit | Core complete |
 | Admin Portal | Next.js 16, tRPC, shadcn/ui | **Fully complete** |
-| Backend API | Go/Fiber, PostgreSQL, Redis | Core + Admin CRUD + Observability complete |
+| Backend API | Go/Fiber, PostgreSQL, Redis | **Fully hardened** (43 bugs fixed, security audit complete) |
 
 ---
 
@@ -155,6 +155,14 @@ All 7 security layers from the proposal are implemented:
 | HMAC-SHA256 request signing (Layer 7) | DONE |
 | Offline sync endpoints (bundle + sync-scans) | DONE |
 | Swagger/OpenAPI documentation | DONE |
+| Backend security hardening (43 bugs fixed) | DONE |
+| Per-device HMAC keys (256-bit, generated on login) | DONE |
+| JWT claims hardening (iss/sub/aud, token type isolation) | DONE |
+| Graceful shutdown (SIGTERM/SIGINT handler) | DONE |
+| Health endpoint with DB/Redis connectivity checks | DONE |
+| Metrics endpoint authentication (optional bearer token) | DONE |
+| CORS origin restriction (configurable via env var) | DONE |
+| Database performance indexes (4 missing indexes added) | DONE |
 
 ---
 
@@ -179,6 +187,35 @@ All 7 security layers from the proposal are implemented:
 
 ---
 
+## Backend Security Audit (February 2026)
+
+A comprehensive security audit of the Go backend identified and resolved **43 bugs** across all severity levels. All fixes are deployed to production.
+
+| Severity | Found | Fixed | Examples |
+|----------|-------|-------|----------|
+| Critical | 4 | 4 | Hash chain race condition, HMAC secret exposure, unauthenticated QR endpoint |
+| High | 10 | 10 | Unchecked type assertions, nonce fail-open, CORS wildcard, hardcoded DB creds |
+| Medium | 14 | 14 | Scanner JWT 30-day expiry, unbounded exports, sequential dashboard queries |
+| Low | 11 | 11 | Bcrypt cost mismatch, health endpoint no-op, Prometheus cardinality |
+| DB Indexes | 4 | 4 | Missing indexes on scan_logs, access_schedules, devices |
+| **Total** | **43** | **43** | |
+
+### Key Hardening Changes
+
+- **Per-device HMAC keys** — Each device gets a unique 256-bit key on login (no more shared secret)
+- **JWT token type isolation** — Added `iss`, `sub`, `aud` claims; admin tokens can't be used on scanner endpoints
+- **Nonce anti-replay fail-closed** — Redis errors now return 503 instead of allowing through
+- **Hash chain serialization** — PostgreSQL advisory locks prevent race conditions on audit log appends
+- **Offline bundle encryption** — TOTP seeds AES-256-GCM encrypted with scanner's device key before transmission
+- **Graceful shutdown** — SIGTERM/SIGINT handler with 10s drain timeout
+- **Input validation** — UUID validation on all path params, date/time format validation, device fingerprint SHA-256 format check, batch size limits
+- **Health checks** — `/health` now pings PostgreSQL and Redis, returns 503 with degraded status
+- **Metrics auth** — `/metrics` protected by optional `METRICS_TOKEN` bearer auth
+
+See the full [BACKEND-BUGS.md](https://github.com/pktikkani/contractor-qr-api/blob/main/BACKEND-BUGS.md) for detailed descriptions of all 43 fixes.
+
+---
+
 ## Known Bugs
 
 No known bugs. All previously reported issues have been resolved.
@@ -186,6 +223,7 @@ No known bugs. All previously reported issues have been resolved.
 | Bug | Severity | Component | Status |
 |-----|----------|-----------|--------|
 | ~~QR code distortion on site switch~~ | Low | iOS Contractor | **FIXED** |
+| ~~43 backend security bugs~~ | Critical-Low | Backend API | **ALL FIXED** |
 
 ---
 
@@ -221,6 +259,10 @@ No known bugs. All previously reported issues have been resolved.
 - Android push notification integration (FCM)
 
 ### Phase 3 — Hardening
+- ~~Backend security audit (43 bugs fixed)~~ **DONE**
+- ~~Per-device HMAC keys~~ **DONE**
+- ~~JWT token type isolation~~ **DONE**
+- ~~Graceful shutdown + health checks~~ **DONE**
 - Rate limiting (Go Fiber middleware)
 - Android biometric auth
 - Arabic/RTL for remaining apps

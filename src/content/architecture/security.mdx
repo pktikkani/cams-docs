@@ -5,15 +5,15 @@ CAMS implements defense-in-depth with multiple security layers to prevent unauth
 ## Authentication
 
 ### Contractor Authentication
-1. **Email/password login** with bcrypt-hashed passwords
-2. **Device fingerprinting** — Unique device ID bound to contractor account
+1. **Email/password login** with bcrypt-hashed passwords (cost factor 14)
+2. **Device fingerprinting** — SHA-256 hash format validated (64 hex chars), bound to contractor account
 3. **Biometric unlock** — Fingerprint/Face ID for subsequent app opens
-4. **JWT tokens** — Short-lived access tokens with refresh mechanism
+4. **JWT tokens** — Short-lived access tokens with `iss`, `sub`, `aud` claims and refresh mechanism
 
 ### Guard Authentication
-1. **Email/password login** with device fingerprint registration
+1. **Email/password login** with SHA-256 device fingerprint validation
 2. **Site assignment** — Guards are bound to specific sites
-3. **Session management** — Persistent token storage
+3. **JWT tokens** — 7-day expiry with Redis-based revocation on deactivation
 
 ### Admin Authentication
 1. **Email/password login** with bcrypt-hashed passwords
@@ -99,10 +99,23 @@ All mobile API requests are signed with HMAC-SHA256 to prevent tampering:
 | Algorithm | HMAC-SHA256 |
 | Signing data | `timestamp + "." + request_body` |
 | Headers | `X-Signature` (hex-encoded HMAC), `X-Timestamp` (Unix seconds) |
-| Key delivery | Returned in login response (`hmac_key` field) |
+| Key delivery | **Per-device 256-bit key** generated on login, stored in `devices.hmac_key` / `scanner_devices.hmac_key` |
+| Key resolution | Middleware resolves the device's HMAC key from JWT identity |
 | Freshness | Timestamp must be within 5 minutes of server time |
 
-The HMAC key is delivered per-session at login and stored in encrypted device storage (Keychain on iOS, EncryptedSharedPreferences on Android).
+Each device receives a unique HMAC key on login. The backend resolves the correct key from the JWT identity, eliminating the need for a shared secret. Keys are stored in encrypted device storage (Keychain on iOS, EncryptedSharedPreferences on Android).
+
+## JWT Token Security
+
+All JWTs include standardized claims to prevent token type confusion:
+
+| Claim | Value | Purpose |
+|-------|-------|---------|
+| `iss` | `cams-api` | Issuer — rejects tokens from other services |
+| `sub` | User/device UUID | Subject — identifies the authenticated entity |
+| `aud` | `contractor`, `scanner`, or `admin` | Audience — prevents using admin tokens on scanner endpoints (and vice versa) |
+
+Each middleware validates both `iss` and `aud` on every request. A contractor token cannot access admin endpoints, even if the JWT signature is valid.
 
 ## Nonce Anti-Replay (Layer 3)
 
@@ -110,15 +123,34 @@ Each QR scan includes a unique nonce (UUID v4):
 
 - Stored in **Redis** with a 5-minute TTL after first use
 - Any repeated nonce is rejected as a replay attack
+- **Fail-closed** — Redis errors return HTTP 503 (never silently allow through)
 - Redis errors are tracked via Prometheus (`redis_errors_total`) and trigger critical alerts
 
 ## Network Security
 
 - All API communication over **HTTPS/TLS**
-- JWT tokens with expiration and refresh
+- JWT tokens with expiration, refresh, and `iss`/`sub`/`aud` claim validation
 - **httpOnly cookies** for admin portal (prevents XSS)
 - Request authentication via `Authorization: Bearer <token>` header
-- Input validation using Zod schemas on all endpoints
+- **CORS origin restriction** — Configurable via `CORS_ORIGINS` env var (no more wildcard)
+- Input validation using Zod schemas on admin portal, Go validation on backend
+
+## Input Validation (Backend)
+
+The backend validates all inputs at the API boundary:
+
+| Validation | Where | Detail |
+|------------|-------|--------|
+| UUID format | All path parameters (12 handlers) | `uuid.Parse()` — returns 400 on invalid |
+| Date format | `dateFrom`/`dateTo` query params | Must match `YYYY-MM-DD` — returns 400 on invalid |
+| Time format | Schedule `start_time`/`end_time` | Must match `HH:MM` or `HH:MM:SS` — returns 400 on invalid |
+| Device fingerprint | Login endpoints | Must be 64 hex chars (SHA-256) — returns 400 on invalid |
+| Email/password | Admin login | Must be non-empty — returns 400 `missing_fields` |
+| Batch size | Bulk import contractors | Max 100 rows per request |
+| Batch size | Bulk create schedules | Max 500 combinations per request |
+| Batch size | Offline scan sync | Max 500 scans per request |
+| Photo size | Photo upload | Max 2MB base64 |
+| Export limits | Export endpoints | Max 10,000 rows per export |
 
 ## Observability & Security Monitoring
 

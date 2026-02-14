@@ -51,7 +51,7 @@ graph TD
 - **Cache**: Redis 7 (nonce anti-replay, session cache)
 - **Auth**: JWT tokens with `golang-jwt/jwt/v5`
 - **TOTP**: `pquerna/otp` library (RFC 6238 compliant)
-- **Hashing**: bcrypt for passwords
+- **Hashing**: bcrypt (cost 14) for passwords
 - **Logging**: zerolog (structured JSON to stdout + Loki)
 - **Metrics**: Prometheus client (`client_golang`)
 - **Monitoring**: Grafana dashboards + alerting
@@ -91,8 +91,8 @@ graph TD
 | `access_schedules` | Time-based access rules per contractor per site |
 | `scan_logs` | Audit trail of all QR scans |
 | `admin_users` | Portal admin accounts with role-based access |
-| `scanner_devices` | Registered scanner tablets |
-| `devices` | Contractor device registrations |
+| `scanner_devices` | Registered scanner tablets (with per-device HMAC keys) |
+| `devices` | Contractor device registrations (with per-device HMAC keys) |
 
 ### Entity Relationships
 
@@ -139,6 +139,8 @@ erDiagram
         uuid site_id FK
         string scan_result
         timestamp scan_timestamp
+        string prev_hash
+        string log_hash
     }
 
     admin_users {
