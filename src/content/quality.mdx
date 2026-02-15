@@ -1,0 +1,226 @@
+# Quality & Hardening
+
+**Last Updated:** February 15, 2026
+
+A comprehensive security audit and quality pass was performed across the entire CAMS stack — Go backend, iOS Contractor App, and iOS Scanner App. This page documents every bug found, fixed, and verified.
+
+**97 total issues resolved** across all components.
+
+---
+
+## At a Glance
+
+| Component | Security | Bugs | Performance | Total |
+|-----------|----------|------|-------------|-------|
+| Go Backend API | 18 | 14 | 7 | **43** (includes 4 DB indexes) |
+| iOS Contractor App | 6 | 14 | 6 | **26** |
+| iOS Scanner App | 3 | 10 | 7 | **20** |
+| Backend (iOS-facing) | 2 | 6 | — | **8** |
+| **Grand Total** | **29** | **44** | **20** | **97** |
+
+---
+
+## Go Backend — 43 Bugs Fixed
+
+Full audit of the Go/Fiber backend. All 43 issues resolved and deployed to production.
+
+### Critical (4)
+
+| ID | File | Issue | Fix |
+|----|------|-------|-----|
+| BE1 | `database/scanlog.go` | Hash chain race condition — concurrent scans could corrupt the SHA-256 audit chain | Wrapped SELECT + compute + INSERT in a transaction with `pg_advisory_xact_lock(42)` to serialize appends |
+| BE2 | `handlers/auth.go` | HMAC secret sent to every client on login — same value as JWT_SECRET | Per-device 256-bit HMAC keys generated on login, stored in DB. Middleware resolves key from JWT identity |
+| BE3 | `handlers/qr.go` | QR validation denials returned HTTP 200 | Returns 403 now |
+| BE4 | `cmd/server/main.go` | `/api/v1/qr/validate` was unauthenticated | Removed legacy endpoint entirely |
+
+### High (10)
+
+| ID | File | Issue | Fix |
+|----|------|-------|-----|
+| BE5 | Multiple | Unchecked type assertions on `c.Locals()` | All replaced with comma-ok pattern |
+| BE6 | `handlers/qr.go` | `checkAccessSchedule` only returned first match | Iterates ALL matching schedules |
+| BE7 | `handlers/qr.go` | Nonce anti-replay fails open on Redis error | Redis errors return 503 (fail-closed) |
+| BE8 | `handlers/admin.go` | No UUID validation on path parameters | `uuid.Parse()` on all 12 handlers |
+| BE9 | `handlers/admin.go` | `BulkImportContractors` no batch limit | 100-row limit |
+| BE10 | `handlers/admin.go` | `BulkCreateSchedules` no batch limit | 500-combination limit |
+| BE11 | `cmd/server/main.go` | CORS allows all origins (`*`) | Configurable `CORS_ORIGINS` env var |
+| BE12 | `cmd/server/main.go` | Default DB credentials hardcoded as fallback | Required env vars, no fallback |
+| BE13 | `handlers/scanner.go` | Offline bundle exposes raw TOTP seeds | AES-256-GCM encrypted with scanner's per-device HMAC key |
+| BE14 | Multiple | `rows.Err()` never checked after `rows.Next()` loops | Added to all 17+ loops |
+
+### Medium (14)
+
+| ID | Issue | Fix |
+|----|-------|-----|
+| BE15 | Scanner JWT 30-day expiry, no revocation | 7-day expiry + Redis-based revocation on deactivation |
+| BE16 | `VerifyChain` loads entire scan_logs into memory | Cursor-based batch processing (1000 rows/batch) |
+| BE17 | Export endpoints unbounded | `LIMIT 10000` on all exports |
+| BE18 | Photos stored as base64 in PostgreSQL (5MB) | Reduced to 2MB limit (object storage deferred) |
+| BE19 | Date params not validated before SQL | `isValidDate()` helper, returns 400 on invalid |
+| BE20 | Dashboard stats: 4 sequential DB queries | Single query with sub-selects |
+| BE21 | Loki writer unbounded goroutines | Buffered channel (cap 1000) + single sender + 5s timeout |
+| BE22 | No graceful shutdown | SIGTERM/SIGINT handler with 10s drain |
+| BE23 | ILIKE search reuses `$1` across columns | Separate params per column |
+| BE24 | Numeric fields returned as strings | Raw integers in all API responses |
+| BE25 | No device fingerprint format validation | SHA-256 hex regex (64 chars), returns 400 |
+| BE26 | Admin login accepts empty email/password | Returns 400 `missing_fields` |
+| BE27 | Duplicate email update returns 500 | Returns 409 `email_taken` |
+| BE28 | No JWT issuer/subject/audience claims | All tokens include `iss`, `sub`, `aud`. All middleware validates |
+
+### Low (11)
+
+| ID | Issue | Fix |
+|----|-------|-----|
+| BE29 | Bcrypt cost 10 in test tool | Changed to cost 14 |
+| BE30 | Seed data uses cost-10 hashes | Regenerated all with cost 14 |
+| BE31 | `/health` always returns healthy | Pings PostgreSQL + Redis, returns 503 if degraded |
+| BE32 | `/metrics` unauthenticated | Optional `METRICS_TOKEN` bearer auth |
+| BE33 | `SyncOfflineScans` errors array unbounded | Capped at 50 messages |
+| BE34 | `GetContractorById` ignores sub-query errors | Logs errors + checks `rows.Err()` |
+| BE35 | Prometheus path label cardinality explosion | Unmatched routes normalized to `"unmatched"` |
+| BE36 | Loki writer double-escapes JSON | Proper `json.Marshal` with typed structs |
+| BE37 | `CreateSchedule` no date/time validation | Validates YYYY-MM-DD and HH:MM(:SS) format |
+| BE38 | Contractor disable doesn't deactivate devices | Deactivates devices alongside schedules |
+| BE39 | `SyncOfflineScans` no batch limit | 500-scan limit, returns 400 `batch_too_large` |
+
+### Database Indexes (4)
+
+| Index | Table | Columns |
+|-------|-------|---------|
+| `idx_scan_logs_site` | `scan_logs` | `site_id` |
+| `idx_access_schedules_contractor_site` | `access_schedules` | `contractor_id, site_id` |
+| `idx_access_schedules_site` | `access_schedules` | `site_id` |
+| `idx_devices_contractor` | `devices` | `contractor_id` |
+
+---
+
+## iOS Contractor App — 26 Issues Fixed
+
+### Security Fixes (6)
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| S1 | Hardcoded HMAC key in app binary | **P0** | Key now delivered by backend on login, stored in Keychain |
+| S2 | Demo credentials visible in production | **P1** | Removed entirely from `LoginView` |
+| S3 | HMAC signing key mismatch | **High** | Updated to match backend, then replaced by dynamic key delivery |
+| S4 | HMAC backward compat bypass | **High** | Backend middleware no longer allows unsigned requests |
+| S5 | Plaintext password in Keychain | **High** | Replaced with refresh token flow (`POST /api/v1/auth/refresh`) |
+| S6 | Offline cache in plaintext UserDefaults | **High** | `EncryptedStore` with AES-GCM (CryptoKit), 256-bit Keychain key |
+
+### Bug Fixes (14)
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| B1 | QR code distortion on site switch | **High** | Fixed UIHostingController update, integer-based QR scaling, empty-payload guard |
+| B2 | QR payload goes stale on background | **High** | `willEnterForegroundNotification` observer regenerates QR immediately |
+| B3 | QR animation interpolation artifacts | **Medium** | Disabled animation on QR image, cancel in-flight generation tasks |
+| B4 | JWT validation failures | **High** | Fixed token claim structure on backend, updated iOS model |
+| B5 | TOTP timing drift | **Medium** | Adjusted server-side validation window for clock skew |
+| B6 | Device fingerprint registration race | **High** | Fingerprint sent with login, registered in single transaction |
+| B7 | `@State` with class-based manager | **High** | Changed to `@StateObject` |
+| B8 | Unused override state variables | **Low** | Removed dead code |
+| B9 | Empty keychain produces broken QR | **High** | Shows "Session Error" with "Sign In Again" button |
+| B10 | `@unchecked Sendable` on `@MainActor` classes | **Medium** | Removed unnecessary `@unchecked Sendable` |
+| B11 | `@ObservedObject` with inline init | **Medium** | Changed to `@StateObject` |
+| B12 | Force-unwrapped URLs in APIClient | **High** | `guard let` + `throw APIError.invalidURL` at all 5 sites |
+| B13 | Force-unwrapped Cydia URL | **Medium** | `if let` guard |
+| B14 | Navigation bar transparent on scroll | **Medium** | Added `.toolbarBackground(.visible)` to both views |
+
+### Performance & Architecture (6)
+
+| # | Improvement | What Changed |
+|---|-------------|--------------|
+| P1 | CommonCrypto to CryptoKit migration | Stable, type-safe HMAC signing (no more `withUnsafeBytes` issues) |
+| P2 | Deprecated `UIScreen.main` removal | Scene-based API for screenshot/recording detection |
+| P3 | Device fingerprint flow consolidation | Single round trip login + registration (~200ms savings) |
+| P4 | Auth handler simplification | 101 lines reduced to 36 lines |
+| P5 | `photoUrl` optionality fix | `String?` matches Go's `omitempty` behavior |
+| P6 | DeviceFingerprint CryptoKit migration | All crypto consistently uses CryptoKit |
+
+---
+
+## iOS Scanner App — 20 Issues Fixed
+
+### Security Fixes (3)
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| S1 | Hardcoded HMAC key in app binary | **P0** | Key received from backend during guard login, stored in Keychain |
+| S2 | Scanner login missing fingerprint validation | **P1** | Rejects empty `scanner_id` before issuing JWT |
+| S3 | Cross-site scan injection | **P1** | Validates site assignment before accepting synced scans |
+
+### Bug Fixes (10)
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| B1 | `photoUrl` decoding crash | **High** | `String?` for Go `omitempty` compatibility |
+| B2 | Camera permission not checked | **Medium** | Pre-scan check with alert and Settings redirect |
+| B3 | Camera orientation incorrect on iPad | **Medium** | Orientation change handling in `QRScannerCamera` |
+| B4 | Force-unwrapped URLs in APIClient | **High** | `guard let` + `throw` at all 5 sites |
+| B5 | `@ObservedObject` with inline init | **Medium** | Changed to `@StateObject` |
+| B6 | AccentColor.colorset empty | **Medium** | Set to terracotta `#C75B3F` |
+| B7 | Auto-reset timers not cancellable | **Medium** | Stored in `autoResetTask`, cancelled properly |
+| B8 | LanguageManager singleton init public | **Low** | `private init()` |
+| B9 | Redundant `objectWillChange.send()` | **Low** | Removed (handled by `@Published`) |
+| B10 | String interpolation bypassing localization | **Medium** | Uses `NSLocalizedString` for Arabic translations |
+
+### Performance & Architecture (7)
+
+| # | Improvement | What Changed |
+|---|-------------|--------------|
+| P1 | AES-GCM encrypted offline storage | Contractor data encrypted at rest with Keychain-stored key |
+| P2 | Offline TOTP validation + replay protection | Validates QR codes without network, 48hr window |
+| P3 | Session persistence via Keychain | Guards don't re-login after app restart |
+| P4 | Offline bundle pre-download | Auto-downloads after login + site assignment |
+| P5 | HMAC-SHA256 request signing | All scanner API calls signed (Layer 7 security) |
+| P6 | Camera pipeline optimization | Proper AVCaptureSession lifecycle, prevents battery drain |
+| P7 | QRScannerCamera thread safety | NSLock on mutable state, `let` for immutable callbacks |
+
+---
+
+## Backend Fixes (iOS-facing) — 8 Issues
+
+Fixes applied to the Go backend that directly resolved iOS app issues.
+
+| # | Issue | Fix |
+|---|-------|-----|
+| BE1 | HMAC middleware leaking onto admin routes | Attached HMAC per-route to mobile endpoints only |
+| BE2 | Prometheus method label corruption | `strings.Clone(c.Method())` to avoid Fiber buffer reuse |
+| BE3 | Dockerfile Go version mismatch | Bumped to `golang:1.24-alpine` |
+| BE4 | Vulnerable dependencies | Bumped gofiber, golang-jwt, golang.org/x/crypto |
+| BE5 | OpenAPI spec not served in Docker | Added `COPY --from=builder /app/docs` to Dockerfile |
+| BE6 | Loki timestamp formatting bug | `fmt.Sprintf("%d", now)` for correct nanoseconds |
+| BE7 | Grafana datasource UID mismatch | Explicit `uid: prometheus` and `uid: loki` in provisioning |
+| BE8 | Refresh token endpoint for biometric login | `POST /api/v1/auth/refresh` — enables iOS biometric re-login without storing passwords |
+
+---
+
+## Remaining Open Issues (All Low Severity)
+
+### Scanner App (6 open)
+
+| Bug | File | Issue |
+|-----|------|-------|
+| S14 | `AppTheme.swift` | `cardBackgroundElevated` defined but never used |
+| S15 | `ScannerView.swift` | Hardcoded colors in camera overlay |
+| S16 | `ScannerView.swift` | Deprecated `UIScreen.main.bounds.height` |
+| S17 | `ScannerView.swift` | `accessDeniedView` lacks `ScrollView` |
+| S18 | `Localizable.strings` | 5 orphan localization keys |
+| S10 | `OfflineValidationCache` | Non-atomic read-modify-write (mitigated by `@MainActor`) |
+
+### Contractor App (8 open)
+
+| Bug | File | Issue |
+|-----|------|-------|
+| C15 | `MainTabView.swift` | Hardcoded `UIColor` hex values |
+| C16 | `LoginView.swift` | `.white` progress tint |
+| C17 | `ScreenshotPrevention.swift` | Hardcoded colors in security overlay |
+| C18 | `QRCodeView.swift` | QR `.background(.white)` missing comment |
+| C19 | `ProfileView.swift` | Privacy/Terms links point to `example.com` |
+| C20 | `AppTheme.swift` | 3 unused properties |
+| C21 | `NetworkMonitor.swift` | Dead `deinit` code |
+| C22 | `LanguageManager.swift` | Redundant `objectWillChange.send()` |
+
+### Backend (0 open)
+
+All 43 backend bugs resolved. No remaining issues.

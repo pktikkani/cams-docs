@@ -1,6 +1,7 @@
 export default {
   index: 'Introduction',
   'status': 'Feature Status',
+  'quality': 'Quality & Hardening',
   'architecture': 'System Architecture',
   'api': 'API Reference',
   'admin-portal': 'Admin Portal',
